@@ -1,0 +1,20 @@
+[project]
+name = "insurance-ai-engine"
+version = "0.1.0"
+description = "Insurance AI Engine, (Translation, OCR)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "datasets>=2.14.0",
+    "evaluate>=0.4.6",
+    "huggingface-hub>=0.16.0",
+    "matplotlib>=3.8.0",
+    "pandas>=2.3.3",
+    "pillow>=10.0.0",
+    "vllm>=0.11.0",
+]make
+
+[tool.uv.workspace]
+members = [
+    "models/dots.ocr",
+]

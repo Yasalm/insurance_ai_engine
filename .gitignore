@@ -1,0 +1,11 @@
+.venv
+.env
+
+data/
+.cache
+.__pycache__
+.DS_Store
+*tmp*
+.python-version
+
+uv.lock
