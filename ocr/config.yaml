@@ -1,4 +1,0 @@
-vllm:
-  ocr_models:
-    - name: nanonets/Nanonets-OCR2-3B
-      port: 8001
