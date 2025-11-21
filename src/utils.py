@@ -137,6 +137,116 @@ def extract_ground_truth_text(ocr_data) -> str:
     return ""
 
 
+def clean_html_markdown(text: str) -> str:
+    """
+    Remove HTML tags and markdown formatting from text.
+    
+    Args:
+        text: Text that may contain HTML tags and markdown formatting
+        
+    Returns:
+        Cleaned text with HTML tags and markdown removed
+    """
+    if not text:
+        return ""
+    
+    # Fast path: if no HTML/markdown markers, return as-is
+    if not any(c in text for c in '<*#`['):
+        return text.strip()
+    
+    # Remove HTML tags (most common, do first)
+    text = re.sub(r'<[^>]+>', '', text)
+    
+    # Remove markdown code blocks ```code``` (before inline code)
+    text = re.sub(r'```[^`]*```', '', text, flags=re.DOTALL)
+    
+    # Remove markdown inline code `code`
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    
+    # Remove markdown links [text](url)
+    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    
+    # Remove markdown bold/italic (**text** or *text*) - handle bold first
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    text = re.sub(r'\*([^*]+)\*', r'\1', text)
+    
+    # Remove markdown headers (# ## ###)
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove markdown lists (- or *)
+    text = re.sub(r'^[\s]*[-*+]\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove markdown horizontal rules (--- or ***)
+    text = re.sub(r'^[\s]*[-*]{3,}[\s]*$', '', text, flags=re.MULTILINE)
+    
+    # Clean up extra whitespace (combine operations)
+    text = re.sub(r'\s+', ' ', text)  # All whitespace to single space
+    text = text.strip()
+    
+    return text
+
+
+def clean_ocr_text(text: str, normalize_whitespace: bool = True, normalize_punctuation: bool = True) -> str:
+    """
+    Clean OCR output text for better metric comparison.
+    Handles OCR-specific parsing issues like extra whitespace, punctuation differences, etc.
+    
+    Args:
+        text: Raw OCR text to clean
+        normalize_whitespace: Normalize all whitespace to single spaces
+        normalize_punctuation: Normalize punctuation spacing
+        
+    Returns:
+        Cleaned text ready for metric comparison
+    """
+    if not text:
+        return ""
+    
+    # First clean HTML/markdown
+    text = clean_html_markdown(text)
+    
+    # Normalize Unicode characters (common OCR errors)
+    # Replace common Unicode variants with ASCII equivalents
+    text = text.replace('\u2018', "'")  # Left single quotation mark
+    text = text.replace('\u2019', "'")  # Right single quotation mark
+    text = text.replace('\u201C', '"')   # Left double quotation mark
+    text = text.replace('\u201D', '"')   # Right double quotation mark
+    text = text.replace('\u2013', '-')   # En dash
+    text = text.replace('\u2014', '--') # Em dash
+    text = text.replace('\u2026', '...') # Ellipsis
+    text = text.replace('\u00A0', ' ')  # Non-breaking space
+    
+    # Remove zero-width characters
+    text = re.sub(r'[\u200B-\u200D\uFEFF]', '', text)
+    
+    # Normalize whitespace
+    if normalize_whitespace:
+        # Replace all types of whitespace with single space
+        text = re.sub(r'[\s\u00A0\u2000-\u200A\u202F\u205F]+', ' ', text)
+        # Remove leading/trailing whitespace
+        text = text.strip()
+    
+    # Normalize punctuation spacing
+    if normalize_punctuation:
+        # Fix spacing around punctuation
+        text = re.sub(r'\s+([.,!?;:])', r'\1', text)  # Remove space before punctuation
+        text = re.sub(r'([.,!?;:])\s*([.,!?;:])', r'\1\2', text)  # Fix double punctuation
+        text = re.sub(r'([.,!?;:])\s+', r'\1 ', text)  # Ensure single space after punctuation
+    
+    # Normalize quotes
+    text = re.sub(r'["""]', '"', text)
+    text = re.sub(r"[''']", "'", text)
+    
+    # Remove excessive punctuation (more than 3 consecutive)
+    text = re.sub(r'([.,!?;:])\1{3,}', r'\1\1\1', text)
+    
+    # Normalize multiple spaces to single space (final pass)
+    text = re.sub(r' +', ' ', text)
+    text = text.strip()
+    
+    return text
+
+
 # UI rendering utilities
 
 def render_ocr_response(text: str) -> None:

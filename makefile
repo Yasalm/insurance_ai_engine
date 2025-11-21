@@ -4,24 +4,43 @@ SHELL := /bin/bash
 PORT ?= 8002
 SERVER_PORT ?= 8081
 
-setup-uv-and-sync:
-	curl -LsSf https://astral.sh/uv/install.sh | sh && \
-	export PATH="$$HOME/.local/bin:$$PATH" && \
-	uv --version && \
-	uv sync
-
 ocr-serve-nanonets:
 	export PATH="$$HOME/.local/bin:$$PATH" && \
-	VLLM_LOGGING_LEVEL=INFO uv run vllm serve nanonets/Nanonets-OCR2-3B --host 0.0.0.0 --port $(PORT) --max-num-batched-tokens 131072 --max-model-len 100000 --gpu-memory-utilization 0.75 --async-scheduling --max-num-seqs 32 --enable-prefix-caching
+	VLLM_LOGGING_LEVEL=INFO uv run vllm serve nanonets/Nanonets-OCR2-3B --host 0.0.0.0 --port $(PORT) --gpu-memory-utilization 0.95 --async-scheduling --max-num-seqs 32 --max-num-batched-tokens 16384 --enable-prefix-caching --generation-config vllm --block-size 16 
 
 ocr-serve-dots:
 	export PATH="$$HOME/.local/bin:$$PATH" && \
-	VLLM_LOGGING_LEVEL=INFO uv run vllm serve rednote-hilab/dots.ocr --host 0.0.0.0 --port $(PORT) --trust-remote-code --async-scheduling --gpu-memory-utilization 0.75 --max-num-seqs 32 --enable-prefix-caching
-
+	CUDA_LAUNCH_BLOCKING=1 TORCH_USE_CUDA_DSA=1 VLLM_LOGGING_LEVEL=INFO uv run vllm serve rednote-hilab/dots.ocr --host 0.0.0.0 --port $(PORT) --trust-remote-code --async-scheduling --gpu-memory-utilization 0.75 --max-num-seqs 32 --enable-prefix-caching --enforce-eager --generation-config vllm
 stop:
-	@pkill -f "vllm serve" || echo "No vLLM process found"
-start-server:
-	uvicorn server.main:app --host 0.0.0.0 --port $(SERVER_PORT)
+	@echo "Stopping vLLM servers..."
+	@PIDS=$$(ps aux | grep "[v]llm serve" | awk '{print $$2}' | tr '\n' ' '); \
+	if [ -z "$$PIDS" ]; then \
+		echo "No vLLM processes found"; \
+	else \
+		echo "Found vLLM processes: $$PIDS"; \
+		kill $$PIDS 2>/dev/null || true; \
+		sleep 2; \
+		REMAINING=$$(ps aux | grep "[v]llm serve" | awk '{print $$2}' | tr '\n' ' '); \
+		if [ -n "$$REMAINING" ]; then \
+			echo "Force killing remaining processes: $$REMAINING"; \
+			kill -9 $$REMAINING 2>/dev/null || true; \
+		fi; \
+		echo "vLLM processes stopped"; \
+
+run-evaluate:
+	uv run python -m src.scripts.evaluate
+
+setup-uv-and-sync:
+	@echo "Setting up uv package manager..."
+	@if ! command -v uv &> /dev/null; then \
+		echo "Installing uv..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		export PATH="$$HOME/.local/bin:$$PATH"; \
+	fi
+	@echo "Syncing project dependencies..."
+	export PATH="$$HOME/.local/bin:$$PATH" && uv sync
+	@echo "Setup complete!"
+
 clean:
 	@echo "Cleaning project (removing .venv, .cache, .local, __pycache__, .pyc files)..."
 	rm -rf .venv
@@ -40,6 +59,7 @@ help:
 	@echo ""
 	@echo "Other commands:"
 	@echo "  make stop                        - Stop vLLM serve"
-	@echo "  make clean                       - Clean entire project (venv, cache, build artifacts)"
-	@echo "  make help                        - Show this help"
-	@echo "  make setup-uv-and-sync           - helper utility to setup uv on ubuntu and sync the project"
+	@echo "  make run-evaluate                - Run OCR evaluation on active models"
+	@echo "  make setup-uv-and-sync          - Setup uv package manager and sync dependencies"
+	@echo "  make clean                      - Clean entire project (venv, cache, build artifacts)"
+	@echo "  make help                       - Show this help"

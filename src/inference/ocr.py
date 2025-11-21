@@ -6,7 +6,7 @@ import logging
 from typing import List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
-
+import httpx
 from ..models.config import ModelEval
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ def infer(
     client = OpenAI(
         base_url=model_config.get_url(),
         api_key=os.getenv("OPENAI_API_KEY", "DUMMY_API_KEY"),
+        timeout=httpx.Timeout(1800.0, connect=60.0), # 10 mins
     )
 
     for attempt in range(max_retries):
@@ -57,7 +58,7 @@ def infer(
                     }
                 ],
                 temperature=0.0,
-                max_tokens=15000,
+                max_tokens=4000,
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -76,7 +77,9 @@ def infer(
 
 
 def infer_batch(
-    img_base64_list: List[str], model_config: ModelEval, max_workers: int = 5
+    img_base64_list: List[str], 
+    model_config: ModelEval, 
+    max_workers: int = 5,
 ) -> List[str]:
     """
     Run OCR inference on multiple images in parallel.
