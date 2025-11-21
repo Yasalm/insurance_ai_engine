@@ -1,0 +1,21 @@
+ocr_models:
+  - name: nanonets/Nanonets-OCR2-3B
+    url: https://fpqr9yfck4x72w-8002.proxy.runpod.net/v1
+    prompt: Extract the text from the above document as if you were reading it naturally.
+    batch_size: 10
+    max_workers: 3
+    num_samples: 100
+    active: true
+    save_results: true
+    results_dir: results
+    extra: null
+  - name: rednote-hilab/dots.ocr
+    url: https://fpqr9yfck4x72w-8002.proxy.runpod.net/v1
+    prompt: Extract the text from the above document as if you were reading it naturally.
+    batch_size: 10
+    max_workers: 3
+    num_samples: 100
+    active: false
+    save_results: true
+    results_dir: results
+    extra: null

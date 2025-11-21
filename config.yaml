@@ -1,7 +1,0 @@
-vllm:
-  ocr:
-    host: https://fpqr9yfck4x72w-8002.proxy.runpod.net/v1
-    model: nanonets/Nanonets-OCR2-3B
-  translation:
-    host:
-    model: 

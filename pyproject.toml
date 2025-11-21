@@ -7,11 +7,16 @@ requires-python = ">=3.12"
 dependencies = [
     "datasets>=2.14.0",
     "evaluate>=0.4.6",
+    "fastapi>=0.121.2",
     "huggingface-hub>=0.16.0",
+    "jiwer>=4.0.0",
     "matplotlib>=3.8.0",
     "pandas>=2.3.3",
     "pillow>=10.0.0",
+    "pymupdf>=1.26.6",
+    "python-multipart>=0.0.20",
     "rich>=13.7.0",
+    "uvicorn>=0.38.0",
     "vllm>=0.11.0",
 ]
 
