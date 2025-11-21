@@ -69,16 +69,14 @@ The evaluation uses text-based metrics to assess model performance on insurance 
    - **Word-level**: WER, Exact Match
    - **Sequence-level**: BLEU, ROUGE, METEOR
 
-## Repository Structure
+## Architecture
 
 This is a mono-repo that can be cloned and used in two ways:
 
-- **GPU Server Deployment**: Clone the repository on a GPU server and serve OCR models via vLLM with an OpenAI-compatible API
-- **AI Engineer Evaluation**: Clone the repository locally and run evaluations by calling the deployed model instances remotely
+- **GPU Server Deployment**: Clone on a GPU server and serve OCR models via vLLM with an OpenAI-compatible API
+- **AI Engineer Evaluation**: Clone locally and run evaluations by calling the deployed model instances remotely
 
-The architecture separates concerns: model serving happens on GPU infrastructure, while evaluation and experimentation can be done from any machine that can reach the deployed API.
-
-## Architecture
+The architecture separates concerns: model serving happens on GPU infrastructure, while evaluation can be done from any machine that can reach the deployed API.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -236,12 +234,7 @@ make run-evaluate
 uv run python -m src.scripts.evaluate
 ```
 
-The evaluation script will:
-1. Load the dataset (`amaye15/invoices-google-ocr` by default)
-2. Run OCR inference on each sample via API calls
-3. Compute evaluation metrics on both raw and cleaned predictions
-4. Display results in a formatted table
-5. Save detailed results to JSON files in `results/`
+The evaluation script loads the dataset, runs OCR inference via API calls, computes metrics on raw and cleaned predictions, displays results in a table, and saves detailed JSON results.
 
 ### Evaluation Results JSON
 
@@ -321,8 +314,6 @@ The table shows evaluation metrics comparing raw and cleaned predictions. Key ob
 
 ## Evaluation Metrics
 
-This repository uses a comprehensive set of metrics to evaluate OCR performance. Understanding these metrics helps interpret model quality:
-
 | Metric | Type | Description | Direction | Use Case |
 |--------|------|-------------|-----------|----------|
 | **CER** (Character Error Rate) | Character | Percentage of characters that differ between prediction and ground truth. Formula: `(Substitutions + Insertions + Deletions) / Total Characters` | Lower is better (0.0 = perfect) | Line-level OCR, character-by-character accuracy assessment |
@@ -339,40 +330,18 @@ This repository uses a comprehensive set of metrics to evaluate OCR performance.
 
 **Current Limitations:**
 
-The evaluation framework focuses on **text-based metrics** only. While the OCR models evaluated (such as `nanonets/Nanonets-OCR2-3B`) are capable of extracting structured layouts including tables and HTML formatting, the current metrics do not assess:
-
-- **Layout preservation**: Whether tables, columns, and document structure are correctly maintained
-- **HTML/XML structure accuracy**: Whether the generated HTML tables match the original document structure
-- **Spatial relationships**: Whether text positioning and relationships are preserved
-- **Table-specific metrics**: Cell-level accuracy, row/column alignment, table structure correctness
+The evaluation focuses on text-based metrics only. While models can extract structured layouts (tables, HTML), current metrics don't assess layout preservation, HTML/XML structure accuracy, spatial relationships, or table-specific metrics.
 
 **Future Enhancements:**
 
-Since the models are designed to output structured formats (HTML tables, markdown), future evaluation enhancements could include:
+Since models output structured formats (HTML tables, markdown), future enhancements could include layout evaluation metrics, HTML/XML parsing accuracy, spatial relationship metrics, and table-specific evaluation.
 
-- **Layout evaluation metrics**: Assessing table structure, column alignment, and document layout preservation
-- **HTML/XML parsing accuracy**: Evaluating whether generated HTML correctly represents the document structure
-- **Spatial relationship metrics**: Measuring how well spatial relationships between text elements are preserved
-- **Table-specific evaluation**: Cell-level accuracy, row/column detection, and table structure validation
-
-These enhancements would provide a more complete assessment of models that excel at both text extraction and layout preservation, complementing the current text-based metrics.
-
-### Raw vs Cleaned Metrics
-
-The evaluation computes metrics on both **raw** and **cleaned** predictions:
-
-- **Raw**: Direct model output, may include HTML tags, markdown formatting, extra whitespace
-- **Cleaned**: Post-processed output with HTML/markdown removed and text normalized
-
-Comparing raw vs cleaned metrics is necessary because the model outputs HTML and markdown tags by design. This can be overridden in the prompt by instructing the model to output only plain text, but the default behavior includes structured formatting.
 
 ### Evaluation Results Visualization
 
-The following shows the result on running the text-based metric on nanonets over 100 sample invoice image while calc metrics on both the exact output from VLM and cleaned version by removing any tags if present:
+Results from running text-based metrics on 100 invoice samples, comparing raw VLM output and cleaned versions:
 
 ![Evaluation Charts](docs/images/evaluation_charts.png)
-
-The charts visualize model performance across different metric types, showing the impact of text cleaning on various evaluation metrics.
 
 ## Dataset and Text Cleaning
 
@@ -384,23 +353,7 @@ The evaluation uses the `amaye15/invoices-google-ocr` dataset, which contains:
 - **OCR Annotations**: Structured OCR data with bounding boxes and text
 - **Labels**: Document type classification (Invoice, Receipt, Barcode, etc.). Note: Only invoice samples were used in the current evaluation
 
-The dataset includes documents with **tables and structured layouts**, which is why models capable of layout extraction are preferred. However, the current evaluation focuses on **text-based metrics** rather than layout preservation.
-
-### Why Text Cleaning is Necessary
-
-The OCR models evaluated in this repository are **designed to output structured formats** (HTML tables, markdown) as a feature, not a limitation. This layout extraction capability is valuable for preserving document structure and is beneficial for production use cases.
-
-However, for evaluation purposes, we remove this markup because:
-
-- **Text-based metrics** (CER, WER, BLEU, ROUGE, METEOR) are designed to compare plain text content
-- **Evaluating with HTML/markdown** would artificially degrade metric scores, as the ground truth doesn't contain markup
-- **Fair comparison** requires comparing text content only, not formatting differences
-
-The cleaning process:
-1. **Normalizes formatting** for fair comparison with ground truth
-2. **Removes markup** that doesn't exist in the reference text
-
-This allows us to assess the model's **text extraction accuracy** separately from its **layout preservation capabilities**, both of which are important but measured differently.
+The dataset includes documents with tables and structured layouts, which is why models capable of layout extraction are preferred. However, the current evaluation focuses on text-based metrics rather than layout preservation.
 
 ### Cleaning Process
 
@@ -470,31 +423,13 @@ insurance_ai_engine/
 
 ## Model Comparison
 
-The evaluation framework supports comparing multiple models by running evaluations sequentially and analyzing the results. The comparison evaluation helps identify:
-
-- Which model performs best on specific metrics
-- Trade-offs between different model architectures
-- Impact of model size vs accuracy
-- Performance differences across metric types
-
-### Running Model Comparison
-
 To compare multiple models:
 
 1. Configure multiple models in `src/config/models.yaml` with `active: true`
 2. Set appropriate URLs for each model via environment variables
-3. Run the evaluation script - it will evaluate all active models:
+3. Run `make run-evaluate` - it evaluates all active models
 
-```bash
-make run-evaluate
-```
-
-The script outputs results for each model, allowing you to compare:
-- Raw vs cleaned metrics side-by-side
-- Performance across different evaluation metrics
-- Model-specific characteristics (formatting, error patterns)
-
-Results are saved to separate JSON files in the `results/` directory, timestamped for easy tracking of evaluation runs.
+Results are saved to separate timestamped JSON files in `results/` for comparison.
 
 ## Usage Examples
 
@@ -614,7 +549,7 @@ View all available commands:
 make help
 ```
 
-ommands:
+Common commands:
 - `make setup-uv-and-sync` - Setup uv and install dependencies
 - `make ocr-serve-nanonets` - Deploy Nanonets OCR model
 - `make ocr-serve-dots` - Deploy Dots OCR model
