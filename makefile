@@ -9,6 +9,12 @@ TRANSLATION_CONFIG ?= en-fr
 NUM_SAMPLES ?= 100
 SPLIT ?= test
 
+
+start-api-server:
+	@echo "Starting API server..."
+	uv run uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+	@echo "Server API started!"
+
 ocr-serve-nanonets:
 	export PATH="$$HOME/.local/bin:$$PATH" && \
 	VLLM_LOGGING_LEVEL=INFO uv run vllm serve nanonets/Nanonets-OCR2-3B --host 0.0.0.0 --port $(PORT) --gpu-memory-utilization 0.95 --async-scheduling --max-num-seqs 32 --max-num-batched-tokens 16384 --enable-prefix-caching --generation-config vllm --block-size 16 

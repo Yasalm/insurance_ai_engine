@@ -8,15 +8,17 @@ from typing import Optional, List, Dict, Any
 import base64
 from PIL import Image
 from io import BytesIO
+from rich.console import Console
 
 from src.config import load_config
 from src.models import ModelEval, TranslationModel
 from src.inference import infer, infer_batch
-from src.inference.translation import infer as translate, infer_batch as translate_batch
+from src.inference.translation import infer as translate, infer_batch as translate_batch, preload_mbart_model
 from src.utils import setup_logging, encode_image, pdf_to_images, detect_file_type
 
 setup_logging()
 logger = logging.getLogger(__name__)
+console = Console()
 
 
 app = FastAPI(
@@ -34,6 +36,38 @@ app.add_middleware(
 )
 
 config = load_config()
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Preload transformer-based models on server startup."""
+    console.print("\n[bold cyan]" + "=" * 60 + "[/bold cyan]")
+    console.print("[bold cyan]Starting server initialization...[/bold cyan]")
+    console.print("[bold cyan]" + "=" * 60 + "[/bold cyan]\n")
+    
+    logger.info(f"Found {len(config.translation_models)} active translation model(s)")
+    
+    transformer_models_loaded = 0
+    transformer_models_failed = 0
+    
+    for model_config in config.translation_models:
+        if model_config.type == "mbart":
+            if preload_mbart_model(model_config):
+                transformer_models_loaded += 1
+            else:
+                transformer_models_failed += 1
+        elif model_config.type == "llm":
+            logger.info(f"Skipping LLM model '{model_config.name}' (loaded via API, not transformers)")
+        else:
+            logger.warning(f"Unknown model type '{model_config.type}' for model '{model_config.name}', skipping")
+    
+    console.print("\n[bold green]" + "=" * 60 + "[/bold green]")
+    console.print(
+        f"[bold green]Server initialization complete.[/bold green] "
+        f"[cyan]Transformer models loaded:[/cyan] [bold]{transformer_models_loaded}[/bold], "
+        f"[cyan]failed:[/cyan] [bold red]{transformer_models_failed}[/bold red]"
+    )
+    console.print("[bold green]" + "=" * 60 + "[/bold green]\n")
 
 
 class Base64ImageRequest(BaseModel):
@@ -131,7 +165,6 @@ async def ocr_infer(
         For PDFs: Dictionary with page-by-page results
     """
     try:
-        # Find model config
         model_config = None
         if model_name:
             for model in config.ocr_models:
@@ -246,7 +279,6 @@ async def ocr_infer_base64(request: Base64ImageRequest):
         OCR text result
     """
     try:
-        # Find model config
         model_config = None
         if request.model_name:
             for model in config.ocr_models:

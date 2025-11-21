@@ -17,13 +17,47 @@ logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=None)
-def _load_mbart_model(model_path: str) -> Tuple[MBartForConditionalGeneration, MBart50TokenizerFast]:
+def _load_mbart_model(
+    model_path: str,
+) -> Tuple[MBartForConditionalGeneration, MBart50TokenizerFast]:
     logger.info(f"Loading mBART model: {model_path}")
     tokenizer = MBart50TokenizerFast.from_pretrained(model_path)
     model = MBartForConditionalGeneration.from_pretrained(model_path)
     model.eval()
     logger.info(f"Loaded mBART model: {model_path}")
     return model, tokenizer
+
+
+def preload_mbart_model(model_config: TranslationModel) -> bool:
+    """
+    Preload an mBART model into memory.
+    
+    Args:
+        model_config: TranslationModel configuration instance
+        
+    Returns:
+        True if model was loaded successfully, False otherwise
+    """
+    if model_config.type != "mbart":
+        logger.warning(f"Skipping preload for non-mBART model: {model_config.name} (type: {model_config.type})")
+        return False
+    
+    model_path = model_config.model_path or model_config.name
+    if not model_path:
+        logger.warning(f"Model '{model_config.name}' has no model_path specified, skipping preload")
+        return False
+    
+    try:
+        logger.info(f"Preloading mBART model: {model_config.name} (path: {model_path})")
+        _load_mbart_model(model_path)
+        logger.info(f"Successfully preloaded mBART model: {model_config.name}")
+        return True
+    except Exception as e:
+        logger.error(
+            f"Failed to preload mBART model '{model_config.name}': {type(e).__name__}: {e}",
+            exc_info=True
+        )
+        return False
 
 
 def infer_mbart(
@@ -82,7 +116,9 @@ def infer_mbart(
                 early_stopping=True,
             )
 
-        translation = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
+        translation = tokenizer.batch_decode(
+            generated_tokens, skip_special_tokens=True
+        )[0]
         return translation
 
     except Exception as e:

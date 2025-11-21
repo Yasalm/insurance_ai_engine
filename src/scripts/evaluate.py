@@ -83,10 +83,9 @@ def evaluate_translation(config, dataset_name, dataset_config, dataset_split, nu
         logger.error("No active translation models found in config!")
         return
 
-    logger.info(f"Loading translation dataset: {dataset_name}" + (f" ({dataset_config})" if dataset_config else ""))
+    logger.info(f"Loading translation dataset: {dataset_name}")
     dataset = download_dataset(
         dataset_name=dataset_name,
-        dataset_config=dataset_config,
         split=dataset_split
     )
 
