@@ -5,7 +5,7 @@ PORT ?= 8002
 SERVER_PORT ?= 8081
 OCR_DATASET ?= amaye15/invoices-google-ocr
 TRANSLATION_DATASET ?= Helsinki-NLP/opus-100
-TRANSLATION_CONFIG ?= en-fr
+TRANSLATION_CONFIG ?= ar-en
 NUM_SAMPLES ?= 100
 SPLIT ?= test
 

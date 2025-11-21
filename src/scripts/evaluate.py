@@ -172,7 +172,7 @@ def main():
         "--dataset-config",
         type=str,
         default=None,
-        help="Dataset config (e.g., 'en-fr' for OPUS-100 or 'de-en' for WMT14 translation dataset)",
+        help="Dataset config (e.g., 'ar-en' for OPUS-100 or 'de-en' for WMT14 translation dataset)",
     )
     parser.add_argument(
         "--src-lang",
@@ -213,7 +213,7 @@ def main():
         evaluate_ocr(config, dataset_name, args.split, args.num_samples, extra)
     elif task_type == "translation":
         dataset_name = args.dataset or "Helsinki-NLP/opus-100"
-        dataset_config = args.dataset_config or "en-fr"
+        dataset_config = args.dataset_config or "ar-en"
         evaluate_translation(
             config,
             dataset_name,
