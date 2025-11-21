@@ -34,7 +34,7 @@ def infer(
         Exception: If inference fails after all retries
     """
     client = OpenAI(
-        base_url=model_config.url,
+        base_url=model_config.get_url(),
         api_key=os.getenv("OPENAI_API_KEY", "DUMMY_API_KEY"),
     )
 
