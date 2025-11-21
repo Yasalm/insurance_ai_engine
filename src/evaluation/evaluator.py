@@ -36,7 +36,7 @@ def evaluate_dataset(
     """
     Evaluate OCR model on a dataset with comprehensive metrics.
     
-    Computes CER, WER, BLEU, ROUGE, and METEOR metrics on both raw and cleaned predictions.
+    Computes core OCR metrics (CER, WER, chrF, Exact Match) and generation metrics (BLEU, ROUGE, METEOR) on both raw and cleaned predictions.
     
     Args:
         dataset: HuggingFace Dataset object
@@ -61,7 +61,7 @@ def evaluate_dataset(
         - dataset_info: Dataset information
         - predictions: Raw and cleaned predictions
         - ground_truth: Ground truth text
-        - metrics: Raw and cleaned metric scores (CER, WER, BLEU, ROUGE, METEOR)
+        - metrics: Raw and cleaned metric scores (core OCR: CER, WER, chrF, Exact Match; generation: BLEU, ROUGE, METEOR)
         - processing_config: Processing parameters used
         - samples: Detailed per-sample results with bounding boxes
     """
@@ -178,29 +178,36 @@ def evaluate_dataset(
     
     logger.info("Computing evaluation metrics...")
     
+    # Core OCR metrics (standard for OCR evaluation)
     cer_metric = evaluate.load("cer")
     wer_metric = evaluate.load("wer")
-    bleu_metric = evaluate.load("bleu")
-    rouge_metric = evaluate.load("rouge")
-    meteor_metric = evaluate.load("meteor")
     exact_match_metric = evaluate.load("exact_match")
     chrf_metric = evaluate.load("chrf")
     
+    # Generation metrics (for text generation quality assessment)
+    bleu_metric = evaluate.load("bleu")
+    rouge_metric = evaluate.load("rouge")
+    meteor_metric = evaluate.load("meteor")
+    
     metrics_raw = {
+        # Core OCR metrics
         "cer": cer_metric.compute(predictions=raw_predictions, references=dataset[ground_truth_column]),
         "wer": wer_metric.compute(predictions=raw_predictions, references=dataset[ground_truth_column]),
         "exact_match": exact_match_metric.compute(predictions=raw_predictions, references=dataset[ground_truth_column]),
         "chrf": chrf_metric.compute(predictions=raw_predictions, references=dataset[ground_truth_column]),
+        # Generation metrics
         "bleu": bleu_metric.compute(predictions=raw_predictions, references=[[ref] for ref in dataset[ground_truth_column]]),
         "rouge": rouge_metric.compute(predictions=raw_predictions, references=dataset[ground_truth_column]),
         "meteor": meteor_metric.compute(predictions=raw_predictions, references=dataset[ground_truth_column]),
     }
     
     metrics_cleaned = {
+        # Core OCR metrics
         "cer": cer_metric.compute(predictions=cleaned_predictions, references=dataset[ground_truth_column]),
         "wer": wer_metric.compute(predictions=cleaned_predictions, references=dataset[ground_truth_column]),
         "exact_match": exact_match_metric.compute(predictions=cleaned_predictions, references=dataset[ground_truth_column]),
         "chrf": chrf_metric.compute(predictions=cleaned_predictions, references=dataset[ground_truth_column]),
+        # Generation metrics
         "bleu": bleu_metric.compute(predictions=cleaned_predictions, references=[[ref] for ref in dataset[ground_truth_column]]),
         "rouge": rouge_metric.compute(predictions=cleaned_predictions, references=dataset[ground_truth_column]),
         "meteor": meteor_metric.compute(predictions=cleaned_predictions, references=dataset[ground_truth_column]),

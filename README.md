@@ -60,14 +60,16 @@ The evaluation uses text-based metrics to assess model performance on insurance 
 
 **Evaluation Methods:**
 
-1. **Text-Based Metrics**: Uses CER, WER, BLEU, ROUGE, METEOR to measure content extraction accuracy, not layout preservation.
+1. **Core OCR Metrics**: Uses standard OCR metrics (CER, WER, chrF, Exact Match) to measure content extraction accuracy, not layout preservation.
 
-2. **Raw vs Cleaned Comparison**: Evaluates both raw and cleaned outputs because evaluating layout is complex. Cleaning ensures fair comparison with ground truth text that doesn't include markup.
+2. **Generation Metrics**: Includes BLEU, ROUGE, METEOR to assess text generation quality, since these are generative vision-language models.
 
-3. **Multiple Metrics**: Different metrics measure different aspects:
-   - **Character-level**: CER, chrF
-   - **Word-level**: WER, Exact Match
-   - **Sequence-level**: BLEU, ROUGE, METEOR
+3. **Raw vs Cleaned Comparison**: Evaluates both raw and cleaned outputs because evaluating layout is complex. Cleaning ensures fair comparison with ground truth text that doesn't include markup.
+
+4. **Multiple Metrics**: Different metrics measure different aspects:
+   - **Core OCR (Character-level)**: CER, chrF
+   - **Core OCR (Word-level)**: WER, Exact Match
+   - **Generation (Sequence-level)**: BLEU, ROUGE, METEOR
 
 ## Architecture
 
@@ -264,19 +266,23 @@ Each evaluation saves a JSON file to `results/` with pattern: `{model_name}_{tim
   
   "metrics": {                                     // Evaluation metrics
     "raw": {                                       // Raw model output (with HTML/markdown)
+      // Core OCR metrics
       "cer": 0.87,                                 // Character Error Rate
       "wer": 0.84,                                 // Word Error Rate
-      "exact_match": { "exact_match": 0.0 },
-      "chrf": { "score": 42.19, ... },
-      "bleu": { "bleu": 0.19, ... },
-      "rouge": { "rouge1": 0.56, "rouge2": 0.44, "rougeL": 0.52 },
-      "meteor": { "meteor": 0.42 }
+      "exact_match": { "exact_match": 0.0 },      // Exact Match percentage
+      "chrf": { "score": 42.19, ... },            // Character n-gram F-score
+      // Generation metrics
+      "bleu": { "bleu": 0.19, ... },              // BLEU score
+      "rouge": { "rouge1": 0.56, "rouge2": 0.44, "rougeL": 0.52 }, // ROUGE scores
+      "meteor": { "meteor": 0.42 }                // METEOR score
     },
     "cleaned": {                                   // Cleaned output (HTML/markdown removed)
+      // Core OCR metrics
       "cer": 0.80,
       "wer": 1.03,
       "exact_match": { "exact_match": 0.0 },
       "chrf": { "score": 45.84, ... },
+      // Generation metrics
       "bleu": { "bleu": 0.28, ... },
       "rouge": { "rouge1": 0.58, "rouge2": 0.51, "rougeL": 0.55 },
       "meteor": { "meteor": 0.41 }
@@ -308,23 +314,35 @@ Example output from the evaluation script:
 ![Evaluation Results Table](docs/images/evaluation_results_table.png)
 
 The table shows evaluation metrics comparing raw and cleaned predictions. Key observations:
-- CER (Character Error Rate) improves from 0.8703 (raw) to 0.7962 (cleaned)
-- WER (Word Error Rate) shows the impact of cleaning on word-level accuracy
-- BLEU, ROUGE, and other sequence-level metrics demonstrate improvements from text normalization
+- **Core OCR metrics**: CER improves from 0.8703 (raw) to 0.7962 (cleaned), WER shows the impact of cleaning on word-level accuracy
+- **Generation metrics**: BLEU, ROUGE, and METEOR demonstrate improvements from text normalization, assessing text generation quality
 
 ## Evaluation Metrics
 
-| Metric | Type | Description | Direction | Use Case |
-|--------|------|-------------|-----------|----------|
-| **CER** (Character Error Rate) | Character | Percentage of characters that differ between prediction and ground truth. Formula: `(Substitutions + Insertions + Deletions) / Total Characters` | Lower is better (0.0 = perfect) | Line-level OCR, character-by-character accuracy assessment |
-| **chrF** (Character n-gram F-score) | Character | Harmonic mean of character precision and recall using n-grams. Considers character sequences, not just individual characters | Higher is better (0-1 scale) | Capturing character-level similarity with order awareness |
-| **WER** (Word Error Rate) | Word | Percentage of words that differ between prediction and ground truth. Formula: `(Substitutions + Insertions + Deletions) / Total Words` | Lower is better (0.0 = perfect) | Document-level OCR, word-based applications |
-| **Exact Match** | Word | Percentage of samples where the entire prediction exactly matches ground truth. Very strict metric - any difference fails | Higher is better (0.0-1.0) | Assessing perfect accuracy rate |
-| **BLEU** | Sequence | Measures n-gram precision between prediction and reference. Originally designed for machine translation, adapted for OCR | Higher is better (0.0-1.0) | Overall text similarity assessment |
-| **ROUGE-1** | Sequence | Unigram recall - how many words from reference appear in prediction | Higher is better (0.0-1.0) | Content overlap assessment |
-| **ROUGE-2** | Sequence | Bigram recall - how many word pairs match | Higher is better (0.0-1.0) | Content overlap assessment |
-| **ROUGE-L** | Sequence | Longest Common Subsequence - captures sentence structure | Higher is better (0.0-1.0) | Content overlap assessment |
-| **METEOR** | Sequence | Harmonic mean of precision and recall with synonym matching. Considers word order and semantic similarity | Higher is better (0.0-1.0) | Semantic similarity beyond exact word matching |
+The evaluation uses two categories of metrics:
+
+**Core OCR Metrics** (standard for OCR evaluation):
+- **CER** (Character Error Rate): Primary OCR metric for character-level accuracy
+- **WER** (Word Error Rate): Primary OCR metric for word-level accuracy  
+- **chrF** (Character n-gram F-score): Character-level similarity with order awareness
+- **Exact Match**: Percentage of perfectly matched samples
+
+**Generation Metrics** (for text generation quality assessment):
+- **BLEU**: N-gram precision for text generation quality
+- **ROUGE**: Recall-oriented metrics for text generation quality
+- **METEOR**: Semantic similarity with synonym matching
+
+| Metric | Type | Category | Description | Direction | Use Case |
+|--------|------|----------|-------------|-----------|----------|
+| **CER** (Character Error Rate) | Character | Core OCR | Percentage of characters that differ between prediction and ground truth. Formula: `(Substitutions + Insertions + Deletions) / Total Characters` | Lower is better (0.0 = perfect) | Primary OCR metric for character-level accuracy |
+| **WER** (Word Error Rate) | Word | Core OCR | Percentage of words that differ between prediction and ground truth. Formula: `(Substitutions + Insertions + Deletions) / Total Words` | Lower is better (0.0 = perfect) | Primary OCR metric for word-level accuracy |
+| **chrF** (Character n-gram F-score) | Character | Core OCR | Harmonic mean of character precision and recall using n-grams. Considers character sequences, not just individual characters | Higher is better (0-100 scale, normalized to 0-1) | Character-level similarity with order awareness |
+| **Exact Match** | Word | Core OCR | Percentage of samples where the entire prediction exactly matches ground truth. Very strict metric - any difference fails | Higher is better (0.0-1.0) | Assessing perfect accuracy rate |
+| **BLEU** | Sequence | Generation | Measures n-gram precision between prediction and reference. Originally designed for machine translation, used here for text generation quality | Higher is better (0.0-1.0) | Text generation quality assessment |
+| **ROUGE-1** | Sequence | Generation | Unigram recall - how many words from reference appear in prediction | Higher is better (0.0-1.0) | Text generation quality assessment |
+| **ROUGE-2** | Sequence | Generation | Bigram recall - how many word pairs match | Higher is better (0.0-1.0) | Text generation quality assessment |
+| **ROUGE-L** | Sequence | Generation | Longest Common Subsequence - captures sentence structure | Higher is better (0.0-1.0) | Text generation quality assessment |
+| **METEOR** | Sequence | Generation | Harmonic mean of precision and recall with synonym matching. Considers word order and semantic similarity | Higher is better (0.0-1.0) | Text generation quality assessment |
 
 ### Limitations and Future Enhancements
 
@@ -495,9 +513,14 @@ results = evaluate_dataset(
 )
 
 # Access metrics
+# Core OCR metrics
 print(f"CER (cleaned): {results['metrics']['cleaned']['cer']}")
 print(f"WER (cleaned): {results['metrics']['cleaned']['wer']}")
+print(f"chrF (cleaned): {results['metrics']['cleaned']['chrf']['score']}")
+print(f"Exact Match (cleaned): {results['metrics']['cleaned']['exact_match']['exact_match']}")
+# Generation metrics
 print(f"BLEU (cleaned): {results['metrics']['cleaned']['bleu']['bleu']}")
+print(f"ROUGE-1 (cleaned): {results['metrics']['cleaned']['rouge']['rouge1']}")
 ```
 
 ### Notebook Experiments
