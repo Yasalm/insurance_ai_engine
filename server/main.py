@@ -4,14 +4,14 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
+from contextlib import asynccontextmanager
 import base64
 from PIL import Image
 from io import BytesIO
 from rich.console import Console
 
 from src.config import load_config
-from src.models import ModelEval, TranslationModel
 from src.inference import infer, infer_batch
 from src.inference.translation import infer as translate, infer_batch as translate_batch, preload_mbart_model
 from src.utils import setup_logging, encode_image, pdf_to_images, detect_file_type
@@ -20,27 +20,12 @@ setup_logging()
 logger = logging.getLogger(__name__)
 console = Console()
 
-
-app = FastAPI(
-    title="Insurance AI Engine - OCR & Translation API",
-    description="API for OCR and Translation model evaluation and inference",
-    version="0.1.0"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 config = load_config()
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Preload transformer-based models on server startup."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup and shutdown events."""
     console.print("\n[bold cyan]" + "=" * 60 + "[/bold cyan]")
     console.print("[bold cyan]Starting server initialization...[/bold cyan]")
     console.print("[bold cyan]" + "=" * 60 + "[/bold cyan]\n")
@@ -68,6 +53,24 @@ async def startup_event():
         f"[cyan]failed:[/cyan] [bold red]{transformer_models_failed}[/bold red]"
     )
     console.print("[bold green]" + "=" * 60 + "[/bold green]\n")
+    
+    yield
+
+
+app = FastAPI(
+    title="Insurance AI Engine - OCR & Translation API",
+    description="API for OCR and Translation model evaluation and inference",
+    version="0.1.0",
+    lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class Base64ImageRequest(BaseModel):
