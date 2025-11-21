@@ -17,3 +17,13 @@ ocr_models:
     save_results: true
     results_dir: results
     extra: null
+
+translation_models:
+  - name: facebook/mbart-large-50-many-to-many-mmt
+    type: mbart
+    model_path: facebook/mbart-large-50-many-to-many-mmt
+    src_lang: en_XX
+    target_lang: fr_XX
+    active: true
+    max_workers: 3
+    extra: null

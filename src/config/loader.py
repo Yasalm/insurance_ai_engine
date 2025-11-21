@@ -4,7 +4,7 @@ import os
 import yaml
 from typing import TYPE_CHECKING
 
-from ..models.config import Config, ModelEval
+from ..models.config import Config, ModelEval, TranslationModel
 
 
 def load_config(config_path: str = None) -> "Config":
@@ -23,13 +23,24 @@ def load_config(config_path: str = None) -> "Config":
     if config_path is None:
         config_path = os.path.join(os.path.dirname(__file__), "models.yaml")
     
-    active_models = []
+    active_ocr_models = []
+    active_translation_models = []
+    
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     
-    for model in config["ocr_models"]:
-        if model["active"]:
-            active_models.append(ModelEval(**model))
+    if "ocr_models" in config:
+        for model in config["ocr_models"]:
+            if model["active"]:
+                active_ocr_models.append(ModelEval(**model))
     
-    return Config(ocr_models=active_models)
+    if "translation_models" in config:
+        for model in config["translation_models"]:
+            if model.get("active", True):
+                active_translation_models.append(TranslationModel(**model))
+    
+    return Config(
+        ocr_models=active_ocr_models,
+        translation_models=active_translation_models
+    )
 

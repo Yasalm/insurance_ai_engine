@@ -1,6 +1,6 @@
 """Pydantic models for configuration."""
 
-from .config import ModelEval, Config
+from .config import ModelEval, Config, TranslationModel
 
-__all__ = ["ModelEval", "Config"]
+__all__ = ["ModelEval", "Config", "TranslationModel"]
 
