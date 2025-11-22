@@ -537,7 +537,7 @@ def _evaluate_translation(
     bleu_metric = evaluate.load("bleu")
     meteor_metric = evaluate.load("meteor")
     chrf_metric = evaluate.load("chrf")
-    rouge_metric = evaluate.load("rouge")
+    ter_metric = evaluate.load("ter")
 
     metrics = {
         "bleu": bleu_metric.compute(
@@ -545,7 +545,7 @@ def _evaluate_translation(
         ),
         "meteor": meteor_metric.compute(predictions=predictions, references=references),
         "chrf": chrf_metric.compute(predictions=predictions, references=references),
-        "rouge": rouge_metric.compute(predictions=predictions, references=references),
+        "ter": ter_metric.compute(predictions=predictions, references=references),
     }
 
     duration = time.time() - start_time

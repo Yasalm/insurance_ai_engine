@@ -3,6 +3,7 @@
 import os
 import time
 import logging
+import threading
 from functools import lru_cache
 from typing import List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -14,6 +15,7 @@ import torch
 from ..models.config import TranslationModel
 
 logger = logging.getLogger(__name__)
+_model_lock = threading.Lock() # because we're running on concurrent requests and this is to ensure that only one request at a time loads the model
 
 
 @lru_cache(maxsize=None)
@@ -22,9 +24,17 @@ def _load_mbart_model(
 ) -> Tuple[MBartForConditionalGeneration, MBart50TokenizerFast]:
     logger.info(f"Loading mBART model: {model_path}")
     tokenizer = MBart50TokenizerFast.from_pretrained(model_path)
-    model = MBartForConditionalGeneration.from_pretrained(model_path)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    model = MBartForConditionalGeneration.from_pretrained(
+        model_path,
+        torch_dtype=torch.float32,
+        device_map=None,
+    )
+    
+    model = model.to(device)
     model.eval()
-    logger.info(f"Loaded mBART model: {model_path}")
+    logger.info(f"Loaded mBART model: {model_path} on device: {device}")
     return model, tokenizer
 
 
@@ -104,22 +114,30 @@ def infer_mbart(
         )
 
     try:
-        model, tokenizer = _load_mbart_model(model_path)
-        tokenizer.src_lang = src_lang
-        encoded_input = tokenizer(text, return_tensors="pt")
+        with _model_lock:
+            model, tokenizer = _load_mbart_model(model_path)
+            device = next(model.parameters()).device
+            tokenizer.src_lang = src_lang
+            encoded_input = tokenizer(text, return_tensors="pt")
+            encoded_input = {k: v.to(device) for k, v in encoded_input.items()}
+            
+            forced_bos_token_id = tokenizer.lang_code_to_id[target_lang]
+            if isinstance(forced_bos_token_id, torch.Tensor):
+                forced_bos_token_id = forced_bos_token_id.item()
 
-        with torch.no_grad():
-            generated_tokens = model.generate(
-                **encoded_input,
-                forced_bos_token_id=tokenizer.lang_code_to_id[target_lang],
-                max_length=max_length,
-                early_stopping=True,
-            )
+            with torch.no_grad():
+                generated_tokens = model.generate(
+                    **encoded_input,
+                    forced_bos_token_id=forced_bos_token_id,
+                    max_length=max_length,
+                    num_beams=num_beams,
+                    early_stopping=True,
+                )
 
-        translation = tokenizer.batch_decode(
-            generated_tokens, skip_special_tokens=True
-        )[0]
-        return translation
+            translation = tokenizer.batch_decode(
+                generated_tokens, skip_special_tokens=True
+            )[0]
+            return translation
 
     except Exception as e:
         logger.error(f"mBART inference failed for model '{model_config.name}': {e}")

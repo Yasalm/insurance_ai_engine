@@ -86,7 +86,8 @@ def evaluate_translation(config, dataset_name, dataset_config, dataset_split, nu
     logger.info(f"Loading translation dataset: {dataset_name}")
     dataset = download_dataset(
         dataset_name=dataset_name,
-        split=dataset_split
+        split=dataset_split,
+        dataset_config=dataset_config,
     )
 
     if "translation" in dataset.column_names:
@@ -146,9 +147,7 @@ def evaluate_translation(config, dataset_name, dataset_config, dataset_split, nu
         table.add_row("BLEU", f"{metrics['bleu']['bleu']:.4f}")
         table.add_row("METEOR", f"{metrics['meteor']['meteor']:.4f}")
         table.add_row("chrF", f"{metrics['chrf']['score']:.4f}")
-        table.add_row("ROUGE-1", f"{metrics['rouge']['rouge1']:.4f}")
-        table.add_row("ROUGE-2", f"{metrics['rouge']['rouge2']:.4f}")
-        table.add_row("ROUGE-L", f"{metrics['rouge']['rougeL']:.4f}")
+        table.add_row("TER", f"{metrics['ter']['score']:.4f}")
 
         console.print(table)
         console.print()
@@ -214,6 +213,7 @@ def main():
     elif task_type == "translation":
         dataset_name = args.dataset or "Helsinki-NLP/opus-100"
         dataset_config = args.dataset_config or "ar-en"
+        extra = {}
         evaluate_translation(
             config,
             dataset_name,
