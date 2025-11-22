@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance AI Engine - OCR & Translation Demo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h1>Insurance AI Engine</h1>
+            <p class="subtitle">Advanced OCR & Translation Services</p>
+        </header>
+
+        <div class="config-section">
+            <div class="config-icon">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="config-content">
+                <label for="apiUrl">API Endpoint</label>
+                <input type="text" id="apiUrl" placeholder="https://fpqr9yfck4x72w-8003.proxy.runpod.net" />
+            </div>
+            <button onclick="saveApiUrl()" class="btn-save">
+                <i class="fas fa-check"></i>
+                <span>Save</span>
+            </button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('ocr', event)">OCR</button>
+            <button class="tab-button" onclick="switchTab('translation', event)">Translation</button>
+        </div>
+
+        <!-- OCR Tab -->
+        <div id="ocr-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-file-image"></i>
+                    </div>
+                    <div>
+                        <h2>Document OCR</h2>
+                        <p class="description">Extract text from images or PDF documents using advanced OCR technology</p>
+                    </div>
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" accept="image/*,.pdf" onchange="handleFileSelect(event)" />
+                    <div class="upload-placeholder">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="upload-text">Click to upload or drag and drop</p>
+                        <p class="file-types">Supported formats: PNG, JPEG, GIF, BMP, WebP, PDF</p>
+                    </div>
+                </div>
+
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    <div class="file-info-content">
+                        <div class="file-icon">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="file-details">
+                            <p class="file-label">Selected File</p>
+                            <p class="file-name" id="fileName"></p>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <button onclick="processOCR()" class="btn-primary">
+                            <i class="fas fa-search"></i>
+                            <span>Process OCR</span>
+                        </button>
+                        <button onclick="clearFile()" class="btn-secondary">
+                            <i class="fas fa-times"></i>
+                            <span>Clear</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="ocrLoading" class="loading" style="display: none;">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <p>Processing document...</p>
+                        <p class="loading-subtitle">This may take a few moments</p>
+                    </div>
+                </div>
+
+                <div id="ocrResults" class="results" style="display: none;">
+                    <div class="results-header">
+                        <h3>
+                            <i class="fas fa-check-circle"></i>
+                            OCR Results
+                        </h3>
+                    </div>
+                    <div class="result-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Model</span>
+                            <span class="meta-value" id="ocrModel"></span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">File Type</span>
+                            <span class="meta-value" id="ocrFileType"></span>
+                        </div>
+                        <div class="meta-item" id="ocrPages" style="display: none;">
+                            <span class="meta-label">Total Pages</span>
+                            <span class="meta-value" id="ocrTotalPages"></span>
+                        </div>
+                    </div>
+                    <div id="ocrText" class="result-text"></div>
+                </div>
+
+                <div id="ocrError" class="error" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Translation Tab -->
+        <div id="translation-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-language"></i>
+                    </div>
+                    <div>
+                        <h2>Text Translation</h2>
+                        <p class="description">Translate text between multiple languages using advanced AI models</p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sourceText">
+                        <i class="fas fa-text-height"></i>
+                        Source Text
+                    </label>
+                    <textarea id="sourceText" rows="6" placeholder="Enter the text you want to translate..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="srcLang">
+                            <i class="fas fa-globe"></i>
+                            Source Language
+                            <span class="required">*</span>
+                        </label>
+                        <select id="srcLang" required>
+                            <option value="">Select source language</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetLang">
+                            <i class="fas fa-globe-americas"></i>
+                            Target Language
+                            <span class="required">*</span>
+                        </label>
+                        <select id="targetLang" required>
+                            <option value="">Select target language</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="processTranslation()" class="btn-primary btn-large">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Translate</span>
+                </button>
+
+                <div id="translationLoading" class="loading" style="display: none;">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <p>Translating text...</p>
+                        <p class="loading-subtitle">Processing your request</p>
+                    </div>
+                </div>
+
+                <div id="translationResults" class="results" style="display: none;">
+                    <div class="results-header">
+                        <h3>
+                            <i class="fas fa-check-circle"></i>
+                            Translation Results
+                        </h3>
+                    </div>
+                    <div class="result-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Model</span>
+                            <span class="meta-value" id="translationModel"></span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Source Language</span>
+                            <span class="meta-value" id="translationSrcLang"></span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Target Language</span>
+                            <span class="meta-value" id="translationTargetLang"></span>
+                        </div>
+                    </div>
+                    <div id="translationText" class="result-text"></div>
+                </div>
+
+                <div id="translationError" class="error" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="error-message"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
