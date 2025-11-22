@@ -228,7 +228,7 @@ Each evaluation saves a JSON file to `results/` with pattern: `{model_name}_{tim
 #### Error Analysis and Interpretation (OCR)
 
 Using the example above:
-- **Raw vs cleaned outputs:** Cleaning improves most metrics (e.g., chrF, BLEU, ROUGE) because HTML/markdown  is removed because the vision model is capable of extracting markdown and we are only comparing texts, further enhacments can compare layout undersatnding, but some metrics like WER can get worse due to tokenization differences. For business decisions, focus primarily on **cleaned CER/chrF** and use WER as a secondary signal.
+- **Raw vs cleaned outputs:** Cleaning improves most metrics (e.g., chrF, BLEU, ROUGE) because HTML/markdown  is removed because the vision model is capable of extracting markdown and we are only comparing texts, further enhacments can compare layout undersatnding. but for now we are removing the markdown to make it a fair comparsion as text only with ground truth, and quantify, did it extract proper text or it is generating alot of errors.
 - **High CER / WER values:** CER ≈ 0.8 and WER ≈ 0.8–1.0 indicate that the model is still making many character- and word-level errors on this dataset, especially in complex table regions and dense layouts.
 - **Generation metrics:** Increases in BLEU/ROUGE/METEOR from raw → cleaned show how much of the apparent “error” was formatting rather than true text mistakes. If generation metrics remain low after cleaning, the model is genuinely struggling with content.
 
