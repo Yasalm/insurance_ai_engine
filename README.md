@@ -225,6 +225,15 @@ Each evaluation saves a JSON file to `results/` with pattern: `{model_name}_{tim
 
 ![Evaluation Charts](docs/images/evaluation_charts.png)
 
+#### Error Analysis and Interpretation (OCR)
+
+Using the example above:
+- **Raw vs cleaned outputs:** Cleaning improves most metrics (e.g., chrF, BLEU, ROUGE) because HTML/markdown  is removed because the vision model is capable of extracting markdown and we are only comparing texts, further enhacments can compare layout undersatnding, but some metrics like WER can get worse due to tokenization differences. For business decisions, focus primarily on **cleaned CER/chrF** and use WER as a secondary signal.
+- **High CER / WER values:** CER ≈ 0.8 and WER ≈ 0.8–1.0 indicate that the model is still making many character- and word-level errors on this dataset, especially in complex table regions and dense layouts.
+- **Generation metrics:** Increases in BLEU/ROUGE/METEOR from raw → cleaned show how much of the apparent “error” was formatting rather than true text mistakes. If generation metrics remain low after cleaning, the model is genuinely struggling with content.
+
+
+
 #### OCR Evaluation Metrics
 
 **Core OCR Metrics** (standard for OCR evaluation):
@@ -377,6 +386,14 @@ Translation evaluation results are saved in JSON format similar to OCR evaluatio
 **Visualization:**
 
 ![Translation Evaluation Results](docs/images/tr_eval.png)
+
+#### Error Analysis and Interpretation (Translation)
+
+From the example metrics:
+- **BLEU ≈ 0.20** and **chrF ≈ 43** indicate a **moderate but far from perfect** translation quality – many n‑grams and character sequences do not match the reference exactly, which is expected on a challenging test set.
+- **METEOR ≈ 0.47** suggests that, despite relatively low BLEU, there is still a reasonable amount of semantic overlap (thanks to synonym and paraphrase matching).
+- **TER ≈ 73** is high, meaning the reference would require many edits to be transformed into the model output; this confirms that there is substantial room for improvement.
+
 
 #### Translation Metrics
 
