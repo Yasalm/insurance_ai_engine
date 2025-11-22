@@ -7,6 +7,7 @@ ocr_models:
     active: true
     save_results: true
     results_dir: results
+    use_backend_api: true  
     extra: null
   - name: rednote-hilab/dots.ocr
     prompt: Extract the text from the above document as if you were reading it naturally.
@@ -16,6 +17,7 @@ ocr_models:
     active: false
     save_results: true
     results_dir: results
+    use_backend_api: false
     extra: null
 
 translation_models:

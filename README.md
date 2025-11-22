@@ -1,25 +1,123 @@
 # Insurance AI Engine
 
-A mono-repository for deploying, evaluating, and serving OCR and Translation models for insurance document processing. This system provides end-to-end capabilities from model deployment to web-based inference.
+OCR + translation engine for insurance documents with:
+- Evaluation scripts for OCR and translation models
+- A FastAPI backend that talks to OCR + translation models
+- A simple web UI that uses the same backend endpoints
 
-## Table of Contents
+Two main workflows share this repo:
+- **Evaluation** – run metrics against deployed models, save JSON results, compare runs
+- **Serving** – run the API server and OCR model server used by the web UI and external clients
 
-- [Assumptions and Prerequisites](#assumptions-and-prerequisites)
-- [Overview](#overview)
-- [OCR System](#ocr-system)
-- [Translation System](#translation-system)
-- [Evaluation Framework](#evaluation-framework)
-- [System Architecture](#system-architecture)
-- [Components](#components)
-  - [API Server](#api-server)
-  - [Web Interface](#web-interface)
-- [Deployment](#deployment)
-- [Configuration](#configuration)
-- [Usage Guide](#usage-guide)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
+If you just want to run it locally, start with **[Quick Start (Local All‑in‑One)](#quick-start-local-all-in-one)**.  
+
 
 ---
+
+## Quick Start (Local All‑in‑One)
+
+This assumes a single machine with a GPU that can run both the OCR model and the FastAPI server.
+
+### 1. Install dependencies
+
+```bash
+git clone <repository-url>
+cd insurance_ai_engine
+make setup-uv-and-sync
+```
+
+### 2. Start the OCR model server (GPU)
+
+```bash
+make ocr-serve-nanonets PORT=8002
+```
+
+Keep this terminal open; the model will listen on `http://localhost:8002`.
+
+### 3. Configure environment for the backend
+
+Create a `.env` file in the project root (or export these in your shell):
+
+```bash
+API_SERVER_URL=http://localhost:8000
+NANONETS_NANONETS_OCR2_3B_URL=http://localhost:8002
+OPENAI_API_KEY=DUMMY_API_KEY
+```
+
+You do not need `/v1` in the URL – it is added automatically.
+
+### 4. Start the FastAPI backend
+
+```bash
+make start-api-server SERVER_PORT=8000
+```
+
+The backend exposes OCR + translation endpoints on `http://localhost:8000`.
+
+### 5. Open the web interface
+
+```bash
+cd web
+python -m http.server 8080
+```
+
+Then open `http://localhost:8080` in your browser and set the API endpoint to `http://localhost:8000`.
+
+You now have:
+- OCR model server on port **8002**
+- API server on port **8000**
+- Web UI on port **8080**
+
+---
+
+## Common Workflows
+
+### Run OCR via API
+
+```bash
+curl -X POST "http://localhost:8000/ocr/infer" \
+  -F "file=@image.jpg" \
+  -F "model_name=nanonets/Nanonets-OCR2-3B"
+```
+
+For PDFs:
+
+```bash
+curl -X POST "http://localhost:8000/ocr/infer" \
+  -F "file=@document.pdf" \
+  -F "model_name=nanonets/Nanonets-OCR2-3B" \
+  -F "pdf_dpi=200"
+```
+
+### Run translation via API
+
+```bash
+curl -X POST "http://localhost:8000/translation/translate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello, how are you?",
+    "src_lang": "en_XX",
+    "target_lang": "ar_AR"
+  }'
+```
+
+### Run OCR evaluation (metrics + JSON results)
+
+```bash
+# Uses models configured as active in src/config/models.yaml
+make evaluate-ocr
+
+# Or directly
+uv run python -m src.scripts.evaluate
+```
+
+This will:
+- Load the evaluation dataset from HuggingFace
+- Call OCR models via API
+- Compute metrics (CER, WER, BLEU, ROUGE, METEOR, etc.)
+- Save JSON results to `results/`
+
+For detailed explanations of metrics, datasets, and example JSON outputs, see **`docs/README.md`**.
 
 ## Assumptions and Prerequisites
 
@@ -52,19 +150,15 @@ Before using this repository, please ensure you understand and have access to th
 
 ---
 
-## Overview
+## OCR and Translation Evaluation
 
-### What is This Repository?
+This is the core functionality of the repository. The evaluation framework assesses OCR and translation model performance using standardized metrics.
 
-This repository provides a complete system for:
+### OCR Evaluation
 
-1. **OCR Model Deployment**: Deploy vision-language models (VLMs) for document OCR using vLLM
-2. **Translation Services**: Deploy and use mBART models for multilingual text translation
-3. **REST API Server**: FastAPI-based server exposing OCR and translation endpoints
-4. **Web Interface**: Simple web UI for testing and demonstrating capabilities
-5. **Model Evaluation**: Evaluation framework with multiple metrics
+The OCR evaluation framework assesses model performance on invoice images with structured layouts and tables.
 
-### Why Vision-Language Models for OCR?
+#### Why Vision-Language Models for OCR?
 
 Traditional OCR pipelines (Tesseract, PaddleOCR) struggle with:
 - Complex layouts and multi-column documents
@@ -87,6 +181,355 @@ The evaluation dataset contains invoices with complex layouts, multi-column stru
 - Preserving spatial relationships between text elements
 - Handling multi-column layouts
 - Recognizing document structure (headers, footers, tables, signatures)
+
+#### OCR Evaluation Results
+
+**Results Format:**
+
+Each evaluation saves a JSON file to `results/` with pattern: `{model_name}_{timestamp}.json`
+
+```json
+{
+  "model": "nanonets/Nanonets-OCR2-3B",
+  "num_samples": 100,
+  "timestamp": "2025-11-21T19:07:28.364252",
+  "duration_seconds": 395.35,
+  "duration_formatted": "6m 35s",
+  "model_config": { ... },
+  "dataset_info": { ... },
+  "metrics": {
+    "raw": {
+      "cer": 0.87,
+      "wer": 0.84,
+      "chrf": { "score": 42.19 },
+      "bleu": { "bleu": 0.19 },
+      "rouge": { "rouge1": 0.56, "rouge2": 0.44, "rougeL": 0.52 },
+      "meteor": { "meteor": 0.42 }
+    },
+    "cleaned": {
+      "cer": 0.80,
+      "wer": 1.03,
+      "chrf": { "score": 45.84 },
+      "bleu": { "bleu": 0.28 },
+      "rouge": { "rouge1": 0.58, "rouge2": 0.51, "rougeL": 0.55 },
+      "meteor": { "meteor": 0.41 }
+    }
+  },
+  "samples": [ ... ]
+}
+```
+
+**Visualization:**
+
+![Evaluation Results Table](docs/images/evaluation_results_table.png)
+
+![Evaluation Charts](docs/images/evaluation_charts.png)
+
+#### OCR Evaluation Metrics
+
+**Core OCR Metrics** (standard for OCR evaluation):
+- **CER** (Character Error Rate): Primary OCR metric for character-level accuracy
+- **WER** (Word Error Rate): Primary OCR metric for word-level accuracy
+- **chrF** (Character n-gram F-score): Character-level similarity with order awareness
+- **Exact Match**: Percentage of perfectly matched samples
+
+**Generation Metrics** (for text generation quality assessment):
+- **BLEU**: N-gram precision for text generation quality
+- **ROUGE**: Recall-oriented metrics for text generation quality
+- **METEOR**: Semantic similarity with synonym matching
+
+| Metric | Type | Category | Description | Direction | Use Case |
+|--------|------|----------|-------------|-----------|----------|
+| **CER** | Character | Core OCR | Percentage of characters that differ between prediction and ground truth | Lower is better (0.0 = perfect) | Primary OCR metric for character-level accuracy |
+| **WER** | Word | Core OCR | Percentage of words that differ between prediction and ground truth | Lower is better (0.0 = perfect) | Primary OCR metric for word-level accuracy |
+| **chrF** | Character | Core OCR | Harmonic mean of character precision and recall using n-grams | Higher is better (0-100 scale) | Character-level similarity with order awareness |
+| **Exact Match** | Word | Core OCR | Percentage of samples where entire prediction exactly matches ground truth | Higher is better (0.0-1.0) | Assessing perfect accuracy rate |
+| **BLEU** | Sequence | Generation | Measures n-gram precision between prediction and reference | Higher is better (0.0-1.0) | Text generation quality assessment |
+| **ROUGE-1/2/L** | Sequence | Generation | Recall-oriented metrics (unigram, bigram, LCS) | Higher is better (0.0-1.0) | Text generation quality assessment |
+| **METEOR** | Sequence | Generation | Harmonic mean with synonym matching and word order | Higher is better (0.0-1.0) | Text generation quality assessment |
+
+#### Evaluation Approach
+
+The evaluation uses text-based metrics to assess model performance:
+
+**Evaluation Methods:**
+
+1. **Core OCR Metrics**: Standard OCR metrics (CER, WER, chrF, Exact Match) to measure content extraction accuracy
+2. **Generation Metrics**: BLEU, ROUGE, METEOR to assess text generation quality
+3. **Raw vs Cleaned Comparison**: Evaluates both raw and cleaned outputs for fair comparison
+4. **Multiple Metrics**: Different metrics measure different aspects:
+   - **Core OCR (Character-level)**: CER, chrF
+   - **Core OCR (Word-level)**: WER, Exact Match
+   - **Generation (Sequence-level)**: BLEU, ROUGE, METEOR
+
+#### Reproducing Results (Running OCR Evaluation)
+
+**Step 1: Setup**
+
+```bash
+git clone <repository-url>
+cd insurance_ai_engine
+make setup-uv-and-sync
+```
+
+**Step 2: Configure Model URL**
+
+Point to your deployed backend API server:
+
+```bash
+# Option A: Use backend API (recommended)
+export API_SERVER_URL="http://your-deployed-backend:8000"
+
+# Option B: Call model directly
+export NANONETS_NANONETS_OCR2_3B_URL="http://your-gpu-server:8002"
+export OPENAI_API_KEY="DUMMY_API_KEY"
+```
+
+**Step 3: Run Evaluation**
+
+```bash
+# Run evaluation on all active OCR models
+make evaluate-ocr
+
+# Or run directly
+uv run python -m src.scripts.evaluate
+```
+
+The evaluation script:
+- Loads the dataset from HuggingFace
+- Runs OCR inference via API calls to deployed models
+- Computes metrics on raw and cleaned predictions
+- Displays results in a table
+- Saves JSON results to `results/` directory
+
+#### OCR Dataset
+
+The evaluation uses the `amaye15/invoices-google-ocr` dataset, which contains:
+- **Images**: Invoice and document images (PNG format)
+- **OCR Annotations**: Structured OCR data with bounding boxes and text
+- **Labels**: Document type classification (Invoice, Receipt, Barcode, etc.)
+
+#### Text Cleaning
+
+The evaluation pipeline includes two cleaning functions:
+
+**`clean_html_markdown()`**: Removes HTML tags and markdown syntax
+- Strips `<table>`, `<tr>`, `<td>` tags
+- Removes markdown headers, lists, code blocks
+- Preserves text content
+
+**`clean_ocr_text()`**: OCR text normalization
+- Unicode normalization (smart quotes, dashes, etc.)
+- Whitespace normalization
+- Punctuation spacing fixes
+- Zero-width character removal
+
+This cleaning ensures fair comparison between models that output structured formats and plain text.
+
+### Translation Evaluation
+
+The evaluation framework also supports translation model evaluation using standard machine translation metrics.
+
+#### Why mBART?
+
+**Architecture Choice:**
+mBART uses a sequence-to-sequence transformer architecture with language-specific tokens. Unlike traditional translation models that require separate models for each language pair, mBART uses a single model with language code prefixes (e.g., `ar_AR`, `en_XX`) to handle all language pairs.
+
+#### Translation Evaluation Results
+
+Translation evaluation results are saved in JSON format similar to OCR evaluation. Example results from mBART model evaluation:
+
+```json
+{
+  "model": "facebook/mbart-large-50-many-to-many-mmt",
+  "model_type": "mbart",
+  "num_samples": 100,
+  "model_config": {
+    "name": "facebook/mbart-large-50-many-to-many-mmt",
+    "type": "mbart",
+    "src_lang": "ar_AR",
+    "target_lang": "en_XX",
+    "max_workers": 3
+  },
+  "dataset_info": {
+    "dataset_name": "Helsinki-NLP/opus-100",
+    "split": "test",
+    "num_samples": 100
+  },
+  "metrics": {
+    "bleu": {
+      "bleu": 0.1952
+    },
+    "meteor": {
+      "meteor": 0.4703
+    },
+    "chrf": {
+      "score": 43.5020
+    },
+    "ter": {
+      "score": 73.3708
+    }
+  },
+  "samples": [ ... ]
+}
+```
+
+**Visualization:**
+
+![Translation Evaluation Results](docs/images/tr_eval.png)
+
+#### Translation Metrics
+
+Translation evaluation uses metrics designed for machine translation quality assessment:
+
+**Interpreting Translation Metrics:**
+
+- **BLEU**: Focuses on precision - how many n-grams from the translation match the reference. Low scores may indicate poor quality or empty outputs.
+- **METEOR**: Balances precision and recall with synonym awareness. Often correlates better with human judgment than BLEU.
+- **chrF**: Character-level evaluation useful for morphologically rich languages or different writing systems.
+- **TER**: Measures word-level errors - the minimum edits needed to match the reference. Lower scores indicate fewer errors.
+
+| Metric | Type | Description | Direction | Use Case |
+|--------|------|-------------|-----------|----------|
+| **BLEU** | Sequence | Measures n-gram precision (1-4 grams) between translation and reference. Includes brevity penalty for short translations | Higher is better (0.0-1.0) | Primary translation quality metric, widely used in MT evaluation |
+| **METEOR** | Sequence | Harmonic mean of precision and recall with synonym matching. Considers word order and semantic similarity | Higher is better (0.0-1.0) | Better correlation with human judgment than BLEU, handles synonyms |
+| **chrF** | Character | Character-level F-score measuring character n-gram overlap. Less affected by word segmentation differences | Higher is better (0-100 scale) | Useful for languages with different writing systems or word boundaries |
+| **TER** | Sequence | Translation Error Rate - measures the minimum number of edits (insertions, deletions, substitutions, shifts) needed to transform translation into reference | Lower is better (0-100 scale, 0 = perfect) | Word-level error rate assessment, complementary to BLEU |
+
+#### Translation Dataset
+
+Translation evaluation uses the `Helsinki-NLP/opus-100` dataset, which contains:
+- Parallel text pairs in multiple languages
+- High-quality human translations
+- Various domains (news, legal, conversational, etc.)
+- Language pairs: Arabic-English (ar-en), Czech-English (cs-en), and others
+
+#### Reproducing Results (Running Translation Evaluation)
+
+**Note:** mBART models run locally in the FastAPI server process using the transformers library. They are loaded when the API server starts, not as a separate service.
+
+```bash
+# Set environment variables (only needed for OCR models)
+export NANONETS_NANONETS_OCR2_3B_URL="http://localhost:8002"
+export OPENAI_API_KEY="DUMMY_API_KEY"
+
+# Start API server (mBART model loads automatically)
+make start-api-server SERVER_PORT=8000
+
+# Run translation evaluation (in another terminal)
+make evaluate-translation
+```
+
+The translation evaluation:
+- Loads parallel text pairs from the dataset
+- Calls the translation API endpoint (mBART runs in the same server process)
+- Computes BLEU, METEOR, chrF, and TER metrics
+- Saves results to JSON files in `results/` directory
+
+#### OCR Evaluation Limitations and Future Enhancements
+
+**Current Limitations:**
+
+- Text-based evaluation only (no spatial/structural assessment)
+- Limited to English language evaluation
+- No visual quality assessment (image quality, preprocessing effects)
+- No real-time performance metrics (latency, throughput)
+
+**Future Enhancements:**
+
+- Spatial evaluation metrics (bounding box accuracy, layout preservation)
+- Multi-language evaluation support
+- Visual quality assessment
+- Performance benchmarking (latency, throughput, cost)
+- Interactive evaluation dashboard
+
+---
+
+## Overview
+
+This repository keeps **evaluation**, **deployment**, and **serving** in one place so you can test exactly what the API returns.
+
+- **Main pieces:**
+  - Evaluation code for OCR and translation (metrics, datasets, JSON results, and plots)
+  - A FastAPI backend and vLLM OCR server (often on a RunPod L40 GPU)
+  - A simple web page that calls the same backend endpoints used in evaluation
+
+For details on metrics and model choices, see **[OCR and Translation Evaluation](#ocr-and-translation-evaluation)**.  
+For a step-by-step setup to run this locally or on a GPU server, see **[Reproducing This Setup (Quick Start)](#reproducing-this-setup-quick-start)**.
+
+---
+
+## Reproducing This Setup (Quick Start)
+
+Follow these simple steps to get the system running:
+
+### 1. Install Dependencies
+
+```bash
+git clone <repository-url>
+cd insurance_ai_engine
+make setup-uv-and-sync
+```
+
+### 2. Deploy OCR Model (on GPU server)
+
+```bash
+# Start the OCR model server (requires GPU)
+make ocr-serve-nanonets PORT=8002
+```
+
+**Note:** The model runs on port 8002 by default. Keep this terminal open.
+
+### 3. Configure Environment
+
+Create a `.env` file in the project root:
+
+```bash
+# For backend API mode (recommended)
+API_SERVER_URL=http://localhost:8000
+
+# For direct model access (alternative)
+# NANONETS_NANONETS_OCR2_3B_URL=http://localhost:8002
+# OPENAI_API_KEY=DUMMY_API_KEY
+```
+
+**Tip:** URLs without `/v1` work fine - it's added automatically.
+
+### 4. Start Backend API Server
+
+```bash
+# Set model URL (backend needs it to call models)
+export NANONETS_NANONETS_OCR2_3B_URL="http://localhost:8002"
+export OPENAI_API_KEY="DUMMY_API_KEY"
+
+# Start the API server
+make start-api-server SERVER_PORT=8000
+```
+
+**Note:** The mBART translation model loads automatically when the server starts.
+
+### 5. Access the Web Interface
+
+Open `web/index.html` in your browser, or serve it with:
+
+```bash
+cd web
+python3 -m http.server 8080
+```
+
+Then visit `http://localhost:8080` and enter your API server URL (e.g., `http://localhost:8000`).
+
+### That's It!
+
+You now have:
+- OCR model server running on port 8002 (vLLM server)
+- Backend API server running on port 8000 (FastAPI server)
+- Translation model loaded in the API server (mBART)
+- Web interface ready to use (client-side HTML/JS)
+
+**For evaluation**, see the [OCR and Translation Evaluation](#ocr-and-translation-evaluation) section.
+
+**For production deployment**, see the [Deployment](#deployment) section.
 
 ---
 
@@ -134,333 +577,149 @@ The translation system provides multilingual text translation using mBART models
 - Supports 50+ languages with proper language code prefixes
 - Many-to-many translation architecture (any language to any language)
 
-### Why mBART?
-
-**Architecture Choice:**
-mBART uses a sequence-to-sequence transformer architecture with language-specific tokens. Unlike traditional translation models that require separate models for each language pair, mBART uses a single model with language code prefixes (e.g., `ar_AR`, `en_XX`) to handle all language pairs.
-
----
-
-## Evaluation Framework
-
-The repository includes an evaluation framework for assessing OCR model performance.
-
-### Evaluation Approach
-
-The evaluation uses text-based metrics to assess model performance on invoice images with structured layouts and tables.
-
-**Evaluation Methods:**
-
-1. **Core OCR Metrics**: Standard OCR metrics (CER, WER, chrF, Exact Match) to measure content extraction accuracy
-2. **Generation Metrics**: BLEU, ROUGE, METEOR to assess text generation quality
-3. **Raw vs Cleaned Comparison**: Evaluates both raw and cleaned outputs for fair comparison
-4. **Multiple Metrics**: Different metrics measure different aspects:
-   - **Core OCR (Character-level)**: CER, chrF
-   - **Core OCR (Word-level)**: WER, Exact Match
-   - **Generation (Sequence-level)**: BLEU, ROUGE, METEOR
-
-### Running Evaluation
-
-**Step 1: Setup**
-
-```bash
-git clone <repository-url>
-cd insurance_ai_engine
-make setup-uv-and-sync
-```
-
-**Step 2: Configure Model URL**
-
-```bash
-export NANONETS_NANONETS_OCR2_3B_URL="http://your-gpu-server:8002/v1"
-export OPENAI_API_KEY="DUMMY_API_KEY"
-```
-
-**Step 3: Run Evaluation**
-
-```bash
-# Run evaluation on all active models
-make run-evaluate
-
-# Or run directly
-uv run python -m src.scripts.evaluate
-```
-
-The evaluation script:
-- Loads the dataset from HuggingFace
-- Runs OCR inference via API calls
-- Computes metrics on raw and cleaned predictions
-- Displays results in a table
-- Saves JSON results
-
-### Evaluation Metrics
-
-**Core OCR Metrics** (standard for OCR evaluation):
-- **CER** (Character Error Rate): Primary OCR metric for character-level accuracy
-- **WER** (Word Error Rate): Primary OCR metric for word-level accuracy
-- **chrF** (Character n-gram F-score): Character-level similarity with order awareness
-- **Exact Match**: Percentage of perfectly matched samples
-
-**Generation Metrics** (for text generation quality assessment):
-- **BLEU**: N-gram precision for text generation quality
-- **ROUGE**: Recall-oriented metrics for text generation quality
-- **METEOR**: Semantic similarity with synonym matching
-
-| Metric | Type | Category | Description | Direction | Use Case |
-|--------|------|----------|-------------|-----------|----------|
-| **CER** | Character | Core OCR | Percentage of characters that differ between prediction and ground truth | Lower is better (0.0 = perfect) | Primary OCR metric for character-level accuracy |
-| **WER** | Word | Core OCR | Percentage of words that differ between prediction and ground truth | Lower is better (0.0 = perfect) | Primary OCR metric for word-level accuracy |
-| **chrF** | Character | Core OCR | Harmonic mean of character precision and recall using n-grams | Higher is better (0-100 scale) | Character-level similarity with order awareness |
-| **Exact Match** | Word | Core OCR | Percentage of samples where entire prediction exactly matches ground truth | Higher is better (0.0-1.0) | Assessing perfect accuracy rate |
-| **BLEU** | Sequence | Generation | Measures n-gram precision between prediction and reference | Higher is better (0.0-1.0) | Text generation quality assessment |
-| **ROUGE-1/2/L** | Sequence | Generation | Recall-oriented metrics (unigram, bigram, LCS) | Higher is better (0.0-1.0) | Text generation quality assessment |
-| **METEOR** | Sequence | Generation | Harmonic mean with synonym matching and word order | Higher is better (0.0-1.0) | Text generation quality assessment |
-
-### Evaluation Results
-
-**Results Format:**
-
-Each evaluation saves a JSON file to `results/` with pattern: `{model_name}_{timestamp}.json`
-
-```json
-{
-  "model": "nanonets/Nanonets-OCR2-3B",
-  "num_samples": 100,
-  "timestamp": "2025-11-21T19:07:28.364252",
-  "duration_seconds": 395.35,
-  "duration_formatted": "6m 35s",
-  "model_config": { ... },
-  "dataset_info": { ... },
-  "metrics": {
-    "raw": {
-      "cer": 0.87,
-      "wer": 0.84,
-      "chrf": { "score": 42.19 },
-      "bleu": { "bleu": 0.19 },
-      "rouge": { "rouge1": 0.56, "rouge2": 0.44, "rougeL": 0.52 },
-      "meteor": { "meteor": 0.42 }
-    },
-    "cleaned": {
-      "cer": 0.80,
-      "wer": 1.03,
-      "chrf": { "score": 45.84 },
-      "bleu": { "bleu": 0.28 },
-      "rouge": { "rouge1": 0.58, "rouge2": 0.51, "rougeL": 0.55 },
-      "meteor": { "meteor": 0.41 }
-    }
-  },
-  "samples": [ ... ]
-}
-```
-
-**Visualization:**
-
-![Evaluation Results Table](docs/images/evaluation_results_table.png)
-
-![Evaluation Charts](docs/images/evaluation_charts.png)
-
-### Dataset
-
-The evaluation uses the `amaye15/invoices-google-ocr` dataset, which contains:
-- **Images**: Invoice and document images (PNG format)
-- **OCR Annotations**: Structured OCR data with bounding boxes and text
-- **Labels**: Document type classification (Invoice, Receipt, Barcode, etc.)
-
-### Text Cleaning
-
-The evaluation pipeline includes two cleaning functions:
-
-**`clean_html_markdown()`**: Removes HTML tags and markdown syntax
-- Strips `<table>`, `<tr>`, `<td>` tags
-- Removes markdown headers, lists, code blocks
-- Preserves text content
-
-**`clean_ocr_text()`**: OCR text normalization
-- Unicode normalization (smart quotes, dashes, etc.)
-- Whitespace normalization
-- Punctuation spacing fixes
-- Zero-width character removal
-
-This cleaning ensures fair comparison between models that output structured formats and plain text.
-
-### Translation Evaluation
-
-The evaluation framework also supports translation model evaluation using standard machine translation metrics.
-
-#### Translation Metrics
-
-Translation evaluation uses metrics designed for machine translation quality assessment:
-
-| Metric | Type | Description | Direction | Use Case |
-|--------|------|-------------|-----------|----------|
-| **BLEU** | Sequence | Measures n-gram precision (1-4 grams) between translation and reference. Includes brevity penalty for short translations | Higher is better (0.0-1.0) | Primary translation quality metric, widely used in MT evaluation |
-| **METEOR** | Sequence | Harmonic mean of precision and recall with synonym matching. Considers word order and semantic similarity | Higher is better (0.0-1.0) | Better correlation with human judgment than BLEU, handles synonyms |
-| **chrF** | Character | Character-level F-score measuring character n-gram overlap. Less affected by word segmentation differences | Higher is better (0-100 scale) | Useful for languages with different writing systems or word boundaries |
-| **TER** | Sequence | Translation Error Rate - measures the minimum number of edits (insertions, deletions, substitutions, shifts) needed to transform translation into reference | Lower is better (0-100 scale, 0 = perfect) | Word-level error rate assessment, complementary to BLEU |
-
-#### Translation Evaluation Results
-
-Translation evaluation results are saved in JSON format similar to OCR evaluation. Example results from mBART model evaluation:
-
-```json
-{
-  "model": "facebook/mbart-large-50-many-to-many-mmt",
-  "model_type": "mbart",
-  "num_samples": 100,
-  "model_config": {
-    "name": "facebook/mbart-large-50-many-to-many-mmt",
-    "type": "mbart",
-    "src_lang": "ar_AR",
-    "target_lang": "en_XX",
-    "max_workers": 3
-  },
-  "dataset_info": {
-    "dataset_name": "Helsinki-NLP/opus-100",
-    "split": "test",
-    "num_samples": 100
-  },
-  "metrics": {
-    "bleu": {
-      "bleu": 0.1952
-    },
-    "meteor": {
-      "meteor": 0.4703
-    },
-    "chrf": {
-      "score": 43.5020
-    },
-    "ter": {
-      "score": 73.3708
-    }
-  },
-  "samples": [
-    {
-      "sample_index": 0,
-      "source_text": "حسناً ، تبعاً للتقرير هناك ثلاث عبوات ماء مفقودة",
-      "predicted_translation": "",
-      "reference_translation": "Well, according to the report, there were three water bottles missing."
-    }
-  ]
-}
-```
-
-**Visualization:**
-
-![Translation Evaluation Results](docs/images/tr_eval.png)
-
-#### Interpreting Translation Metrics
-
-Translation metrics provide different perspectives on translation quality:
-
-- **BLEU**: Focuses on precision - how many n-grams from the translation match the reference. Low scores may indicate poor quality or empty outputs.
-- **METEOR**: Balances precision and recall with synonym awareness. Often correlates better with human judgment than BLEU.
-- **chrF**: Character-level evaluation useful for morphologically rich languages or different writing systems.
-- **TER**: Measures word-level errors - the minimum edits needed to match the reference. Lower scores indicate fewer errors.
-
-#### Translation Dataset
-
-Translation evaluation uses the `Helsinki-NLP/opus-100` dataset, which contains:
-- Parallel text pairs in multiple languages
-- High-quality human translations
-- Various domains (news, legal, conversational, etc.)
-- Language pairs: Arabic-English (ar-en), Czech-English (cs-en), and others
-
-#### Running Translation Evaluation
-
-**Note:** mBART models run locally in the FastAPI server process using the transformers library. They are loaded when the API server starts, not as a separate service.
-
-```bash
-# Set environment variables (only needed for OCR models)
-export NANONETS_NANONETS_OCR2_3B_URL="http://localhost:8002"
-export OPENAI_API_KEY="DUMMY_API_KEY"
-
-# Start API server (mBART model loads automatically)
-make start-api-server SERVER_PORT=8000
-
-# Run translation evaluation (in another terminal)
-make evaluate-translation
-```
-
-The translation evaluation:
-- Loads parallel text pairs from the dataset
-- Calls the translation API endpoint (mBART runs in the same server process)
-- Computes BLEU, METEOR, chrF, and TER metrics
-- Saves results to JSON files in `results/` directory
-
-### OCR Evaluation Limitations and Future Enhancements
-
-**Current Limitations:**
-- Focuses on text-based metrics only
-- Doesn't assess layout preservation, HTML/XML structure accuracy, or spatial relationships
-
-**Future Enhancements:**
-- Layout evaluation metrics
-- HTML/XML parsing accuracy
-- Spatial relationship metrics
-- Table-specific evaluation
-
 ---
 
 ## System Architecture
 
-The system follows a unified deployment architecture where all backend components run on a single L40 GPU instance on RunPod.io ($1/hour). Components can also be deployed separately for local development:
+The system follows a client-server architecture with three main components:
+
+### Server-Side Components (Backend)
+
+**1. OCR Model Server (vLLM)**
+- **What:** Vision-language model serving OCR inference
+- **Technology:** vLLM with OpenAI-compatible API
+- **Model:** nanonets/Nanonets-OCR2-3B
+- **Port:** 8002 (default)
+- **Protocol:** HTTP REST API
+- **Deployment:** Runs on GPU server (local or RunPod.io)
+
+**2. Backend API Server (FastAPI)**
+- **What:** Unified API gateway for OCR and translation services
+- **Technology:** FastAPI (Python)
+- **Port:** 8000 (default)
+- **Endpoints:** `/ocr/infer-base64`, `/translation/translate`, etc.
+- **Responsibilities:**
+  - Receives requests from clients (web interface, evaluation scripts)
+  - Calls OCR model server for OCR tasks
+  - Runs mBART translation model locally (loaded in server process)
+  - Returns formatted responses to clients
+- **Deployment:** Can run on same server as OCR model or separately
+
+**3. Translation Model (mBART)**
+- **What:** Multilingual translation model
+- **Technology:** Transformers library (HuggingFace)
+- **Model:** facebook/mbart-large-50-many-to-many-mmt
+- **Deployment:** Loaded directly into FastAPI server process (not a separate service)
+- **Note:** No separate URL needed - runs locally in API server
+
+### Client-Side Components
+
+**1. Web Interface**
+- **What:** Browser-based UI for testing and demonstration
+- **Technology:** HTML, CSS, JavaScript (vanilla JS, no framework)
+- **Files:** `web/index.html`, `web/app.js`, `web/styles.css`
+- **Functionality:**
+  - Upload images/PDFs for OCR
+  - Enter text for translation
+  - Display results with markdown rendering
+- **Deployment:** Static files served via HTTP server or opened directly in browser
+- **Communication:** Makes HTTP requests to Backend API Server
+
+**2. Evaluation Scripts**
+- **What:** Python scripts for model evaluation
+- **Technology:** Python with HuggingFace datasets, evaluation metrics
+- **Files:** `src/scripts/evaluate.py`, `src/evaluation/evaluator.py`
+- **Functionality:**
+  - Load evaluation datasets
+  - Run batch inference via API calls
+  - Compute metrics (CER, WER, BLEU, etc.)
+  - Save results to JSON files
+- **Deployment:** Runs on local machine or evaluation server
+- **Communication:** Makes HTTP requests to Backend API Server or directly to OCR Model Server
+
+### Deployment Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│              RunPod.io Cloud Platform (L40 GPU)                 │
-│                    Cost: $1.00/hour                            │
+│              Server-Side (RunPod.io Cloud - L40 GPU)            │
+│                    Cost: $1.00/hour                             │
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │  Single L40 GPU Instance                                   │  │
-│  │  ┌─────────────────────────────────────────────────────┐  │  │
-│  │  │  OCR Model (vLLM Server)                             │  │  │
-│  │  │  - nanonets/Nanonets-OCR2-3B                         │  │  │
-│  │  │  - OpenAI-compatible API                              │  │  │
-│  │  └─────────────────────────────────────────────────────┘  │  │
-│  │  ┌─────────────────────────────────────────────────────┐  │  │
-│  │  │  Translation Model (mBART)                          │  │  │
-│  │  │  - facebook/mbart-large-50-many-to-many-mmt         │  │  │
-│  │  └─────────────────────────────────────────────────────┘  │  │
-│  │  ┌─────────────────────────────────────────────────────┐  │  │
-│  │  │  API Server (FastAPI)                               │  │  │
-│  │  │  - OCR endpoints                                     │  │  │
-│  │  │  - Translation endpoints                             │  │  │
-│  │  │  - RunPod Proxy: *.proxy.runpod.net                 │  │  │
-│  │  └─────────────────────────────────────────────────────┘  │  │
+│  │  OCR Model Server (vLLM)                                  │  │
+│  │  - Port: 8002                                              │  │
+│  │  - Endpoint: http://localhost:8002/v1                     │  │
+│  │  - Protocol: OpenAI-compatible API                        │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Backend API Server (FastAPI)                             │  │
+│  │  - Port: 8000                                              │  │
+│  │  - Endpoint: http://localhost:8000                        │  │
+│  │  - Contains: mBART translation model (loaded in process) │  │
+│  │  - Proxy URL: *.proxy.runpod.net (for external access)   │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
                             ▲
-                            │ HTTPS
+                            │ HTTPS/HTTP
                             │
 ┌───────────────────────────┼───────────────────────────────────┐
-│                    Client Devices                              │
+│                    Client-Side Components                       │
 │  ┌──────────────────────────────────────────────────────────┐ │
-│  │  Web Interface (web/index.html)                          │ │
-│  │  - Document OCR upload                                    │ │
-│  │  - Text translation                                       │ │
-│  │  - Results visualization                                  │ │
+│  │  Web Interface (Browser)                                  │ │
+│  │  - Static HTML/JS files                                   │ │
+│  │  - Makes API calls to Backend API Server                 │ │
 │  └──────────────────────────────────────────────────────────┘ │
 │  ┌──────────────────────────────────────────────────────────┐ │
-│  │  Evaluation Scripts (Local Machine)                      │ │
-│  │  - Dataset loading                                        │ │
-│  │  - Batch inference                                        │ │
-│  │  - Metric computation                                     │ │
+│  │  Evaluation Scripts (Python)                             │ │
+│  │  - Runs on local machine or evaluation server            │ │
+│  │  - Makes API calls to Backend API Server                 │ │
+│  │  - Or calls OCR Model Server directly                    │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+### Communication Flow
+
+**Web Interface → Backend API Server:**
+1. User uploads document or enters text in web interface
+2. Web interface sends HTTP POST request to Backend API Server
+3. Backend API Server processes request:
+   - For OCR: Calls OCR Model Server, returns text
+   - For Translation: Uses local mBART model, returns translation
+4. Web interface displays results
+
+**Evaluation Scripts → Backend API Server:**
+1. Evaluation script loads dataset
+2. For each sample, sends HTTP request to Backend API Server
+3. Backend API Server processes and returns result
+4. Evaluation script computes metrics and saves results
+
+**Backend API Server → OCR Model Server:**
+1. Backend API Server receives OCR request
+2. Calls OCR Model Server via OpenAI-compatible API
+3. OCR Model Server returns extracted text
+4. Backend API Server formats and returns to client
 
 ### Key Architecture Decisions
 
 1. **Separation of Concerns**: Model serving, API server, and evaluation are separate components
-2. **Cloud Deployment**: Backend deployed on RunPod.io for GPU access and cost-effectiveness
+2. **Cloud Deployment**: Backend deployed on RunPod.io for GPU access or any server with GPU
 ---
 
 ## Components
 
-### API Server
+### Backend API Server
 
-The FastAPI server (`server/main.py`) provides a REST API for OCR and translation inference.
+**Location:** `server/main.py`
 
-#### Endpoints
+**Purpose:** Central API gateway that handles all client requests and coordinates with model servers.
+
+**Responsibilities:**
+- Receives HTTP requests from clients (web interface, evaluation scripts)
+- Routes OCR requests to OCR Model Server (vLLM)
+- Handles translation requests using local mBART model
+- Formats and returns responses to clients
+- Manages CORS for web interface access
+
+**Endpoints:**
 
 **Health & Information:**
 - `GET /` - API information and active models
@@ -476,30 +735,52 @@ The FastAPI server (`server/main.py`) provides a REST API for OCR and translatio
 - `POST /translation/translate` - Single text translation
 - `POST /translation/batch` - Batch text translation
 
-#### Running the API Server
+**Running the Backend API Server:**
 
 ```bash
-# Start API server (default port 8003)
-make start-api-server
-
-# Or specify custom port
+# Start API server (default port 8000)
 make start-api-server SERVER_PORT=8000
+
+# The server needs model URLs to call OCR models:
+export NANONETS_NANONETS_OCR2_3B_URL="http://localhost:8002"
+export OPENAI_API_KEY="DUMMY_API_KEY"
 ```
 
-See `server/README.md` for API documentation.
+**Note:** The mBART translation model loads automatically when the server starts - no separate service needed.
 
-### Web Interface
+See `server/README.md` for detailed API documentation.
 
-A Simple web interface (`web/`) for interacting with OCR and Translation APIs.
+### Web Interface (Client)
+
+**Location:** `web/` directory
+
+**Purpose:** Browser-based client application for testing OCR and translation capabilities.
+
+**Technology:**
+- Static HTML/CSS/JavaScript files
+- No backend framework required
+- Uses Fetch API for HTTP requests
+- Marked.js library for markdown rendering
+
+**Components:**
+- `index.html` - Main HTML structure
+- `app.js` - Client-side logic for API calls and UI interactions
+- `styles.css` - Styling and layout
+
+**How it works:**
+1. User opens `web/index.html` in browser (or via HTTP server)
+2. User enters Backend API Server URL (e.g., `http://localhost:8000`)
+3. User uploads document or enters text
+4. JavaScript makes HTTP request to Backend API Server
+5. Results are displayed with markdown rendering
 
 ![Web Interface](docs/images/Web_image.png)
 
-#### Features
+#### Demo capabilities
 
-- **Document OCR**: Upload images (PNG, JPEG, GIF, BMP, WebP) or PDF files to extract text
-- **Text Translation**: Translate Text
+- **Document OCR**: Upload images or PDF files to extract text
+- **Text Translation**: Translate text between supported languages
 - **Markdown Rendering**: Properly renders markdown and HTML content in OCR results (including tables)
-- **Configurable API URL**: Set API endpoint via UI (saved in browser localStorage)
 
 #### Using the Web Interface
 
@@ -536,7 +817,7 @@ If running the API server locally, update the API endpoint to:
 
 The backend API server and OCR models are deployed on [RunPod.io](https://www.runpod.io/), a cloud GPU platform.
 
-#### Current Tesing Deployment Setup
+#### Current Testing Deployment Setup
 
 **GPU Instance:**
 - **GPU Type**: NVIDIA L40 GPU
@@ -582,12 +863,15 @@ curl http://localhost:8002/v1/models
 #### Step 4: Start API Server
 
 ```bash
-# Set environment variables
+# Set environment variables for the API server (it needs model URLs internally)
 export NANONETS_NANONETS_OCR2_3B_URL="http://localhost:8002"
 export OPENAI_API_KEY="DUMMY_API_KEY"
 
 # Start API server (mBART translation model loads automatically in the server process)
 make start-api-server SERVER_PORT=8000
+
+# For evaluation, set API_SERVER_URL to point to the backend
+export API_SERVER_URL="http://localhost:8000"
 ```
 
 ### Production Considerations
@@ -615,7 +899,13 @@ Model configuration is managed through `src/config/models.yaml`. Each model entr
 - `active`: Whether the model is active (only active models are loaded)
 - `save_results`: Whether to save evaluation results to JSON
 - `results_dir`: Directory for saving results
-- `url`: Optional explicit API URL (can also be set via environment variables)
+- `use_backend_api`: Whether to use backend API server or call model directly
+  - `true`: Use FastAPI backend endpoint `/ocr/infer-base64` (like web interface)
+  - `false`: Call model directly via OpenAI-compatible API (faster, no backend needed)
+  - `null`: Use `USE_BACKEND_API` environment variable or default to `false`
+- `url`: Optional explicit API URL for direct model access (only needed if `use_backend_api=false`)
+  - **Note:** If not set, the system looks for `{MODEL_NAME}_URL` environment variable
+  - The `/v1` endpoint path is automatically appended if not present (for vLLM compatibility)
 
 **Translation Models:**
 - `name`: Model identifier (e.g., `facebook/mbart-large-50-many-to-many-mmt`)
@@ -630,60 +920,46 @@ Model configuration is managed through `src/config/models.yaml`. Each model entr
 
 ### Environment Variables
 
-Model URLs can be configured via environment variables. The system automatically appends `/v1` for OpenAI-compatible APIs (like vLLM) if not present.
+**Quick Summary:**
+- Model URLs automatically get `/v1` appended (you can include it or not)
+- Configure `use_backend_api` in `src/config/models.yaml` (recommended)
+- Or use environment variables as fallback
 
-#### Required Environment Variables
+**Key Variables:**
 
-**For OCR Models:**
-- `{MODEL_NAME}_URL`: Model URL (e.g., `NANONETS_NANONETS_OCR2_3B_URL`)
-- `MODEL_URL`: Fallback URL for all models (if model-specific URL not set)
-- `OPENAI_API_KEY`: Required by OpenAI client (can be `DUMMY_API_KEY` for local vLLM)
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `API_SERVER_URL` | Backend API server URL | `http://localhost:8000` |
+| `{MODEL_NAME}_URL` | Direct model access URL | `NANONETS_NANONETS_OCR2_3B_URL=http://localhost:8002` |
+| `OPENAI_API_KEY` | API key (use `DUMMY_API_KEY` for local) | `DUMMY_API_KEY` |
+| `USE_BACKEND_API` | Use backend API or direct access | `true` or `false` |
 
-**For Translation Models:**
-- `{MODEL_NAME}_URL`: For LLM-based translation models (API endpoints)
-- **Note:** mBART models run locally in the FastAPI server process using transformers - no URL needed
+**Configuration Priority:**
+1. YAML config (`src/config/models.yaml`) - **Recommended**
+2. Environment variables (`.env` file or shell exports)
+3. Defaults (direct model access)
 
-#### Setting Up Environment Variables
-
-**Option 1: Using `.env` file (Recommended for Local Development)**
-
-Create a `.env` file in the project root:
-
-```bash
-# OCR Model URLs (vLLM servers)
-NANONETS_NANONETS_OCR2_3B_URL=http://localhost:8002
-REDNOTE_HILAB_DOTS_OCR_URL=http://localhost:8002
-
-# Fallback URL for all models
-MODEL_URL=http://localhost:8002
-
-# OpenAI API Key (required but can be dummy for local vLLM)
-OPENAI_API_KEY=DUMMY_API_KEY
-
-# Note: mBART translation models run locally in the FastAPI server process - no URL needed
-```
-
-**Option 2: Export in Shell**
+**Example `.env` file:**
 
 ```bash
-export NANONETS_NANONETS_OCR2_3B_URL="http://localhost:8002"
-export OPENAI_API_KEY="DUMMY_API_KEY"
+# Backend API mode (recommended)
+API_SERVER_URL=http://localhost:8000
+
+# Direct model access (alternative)
+# NANONETS_NANONETS_OCR2_3B_URL=http://localhost:8002
+# OPENAI_API_KEY=DUMMY_API_KEY
 ```
 
-**Option 3: Set in System Environment**
-
-Add to your `~/.bashrc` or `~/.zshrc`:
-
-```bash
-export NANONETS_NANONETS_OCR2_3B_URL="http://localhost:8002"
-export OPENAI_API_KEY="DUMMY_API_KEY"
-```
+**Note:** mBART translation models run locally in the API server - no URL needed.
 
 **Important Notes:**
-- The URL can be `http://localhost:8002` or `http://localhost:8002/` - the system will automatically add `/v1`
-- You don't need to include `/v1` in the URL, but you can if you prefer
-- `OPENAI_API_KEY` is required by the OpenAI client library but can be any dummy value for local vLLM servers
-- For RunPod deployments, use the proxy URL: `https://your-pod-id.proxy.runpod.net`
+- **YAML Configuration (Recommended)**: Set `use_backend_api` in `src/config/models.yaml` for each model
+  - Priority order: YAML config (`use_backend_api` field) → Environment variable (`USE_BACKEND_API`) → Default (`false`)
+- `API_SERVER_URL` should point to your FastAPI backend server (default: `http://localhost:8000`)
+- When `use_backend_api=true`: OCR inference calls the backend API endpoint `/ocr/infer-base64` (like web interface)
+- When `use_backend_api=false`: OCR inference calls models directly via OpenAI-compatible API (faster, no backend needed)
+- The backend server handles model communication internally when using backend API mode
+- For RunPod deployments, use the proxy URL: `https://your-pod-id-8003.proxy.runpod.net`
 
 ---
 
@@ -789,148 +1065,6 @@ curl -X POST "http://localhost:8000/translation/batch" \
 
 ---
 
-## Evaluation Framework
-
-The repository includes an evaluation framework for assessing OCR model performance.
-
-### Evaluation Approach
-
-The evaluation uses text-based metrics to assess model performance on insurance documents with structured layouts and tables.
-
-**Evaluation Methods:**
-
-1. **Core OCR Metrics**: Standard OCR metrics (CER, WER, chrF, Exact Match) to measure content extraction accuracy
-2. **Generation Metrics**: BLEU, ROUGE, METEOR to assess text generation quality
-3. **Raw vs Cleaned Comparison**: Evaluates both raw and cleaned outputs for fair comparison
-4. **Multiple Metrics**: Different metrics measure different aspects:
-   - **Core OCR (Character-level)**: CER, chrF
-   - **Core OCR (Word-level)**: WER, Exact Match
-   - **Generation (Sequence-level)**: BLEU, ROUGE, METEOR
-
-### Running Evaluation
-
-**Step 1: Setup**
-
-```bash
-git clone <repository-url>
-cd insurance_ai_engine
-make setup-uv-and-sync
-```
-
-**Step 2: Configure Model URL**
-
-```bash
-export NANONETS_NANONETS_OCR2_3B_URL="http://your-gpu-server:8002/v1"
-export OPENAI_API_KEY="DUMMY_API_KEY"
-```
-
-**Step 3: Run Evaluation**
-
-```bash
-# Run evaluation on all active models
-make run-evaluate
-
-# Or run directly
-uv run python -m src.scripts.evaluate
-```
-
-The evaluation script:
-- Loads the dataset from HuggingFace
-- Runs OCR inference via API calls
-- Computes metrics on raw and cleaned predictions
-- Displays results in a table
-- Saves JSON results
-
-### Evaluation Metrics
-
-**Core OCR Metrics** (standard for OCR evaluation):
-- **CER** (Character Error Rate): Primary OCR metric for character-level accuracy
-- **WER** (Word Error Rate): Primary OCR metric for word-level accuracy
-- **chrF** (Character n-gram F-score): Character-level similarity with order awareness
-- **Exact Match**: Percentage of perfectly matched samples
-
-**Generation Metrics** (for text generation quality assessment):
-- **BLEU**: N-gram precision for text generation quality
-- **ROUGE**: Recall-oriented metrics for text generation quality
-- **METEOR**: Semantic similarity with synonym matching
-
-| Metric | Type | Category | Description | Direction | Use Case |
-|--------|------|----------|-------------|-----------|----------|
-| **CER** | Character | Core OCR | Percentage of characters that differ between prediction and ground truth | Lower is better (0.0 = perfect) | Primary OCR metric for character-level accuracy |
-| **WER** | Word | Core OCR | Percentage of words that differ between prediction and ground truth | Lower is better (0.0 = perfect) | Primary OCR metric for word-level accuracy |
-| **chrF** | Character | Core OCR | Harmonic mean of character precision and recall using n-grams | Higher is better (0-100 scale) | Character-level similarity with order awareness |
-| **Exact Match** | Word | Core OCR | Percentage of samples where entire prediction exactly matches ground truth | Higher is better (0.0-1.0) | Assessing perfect accuracy rate |
-| **BLEU** | Sequence | Generation | Measures n-gram precision between prediction and reference | Higher is better (0.0-1.0) | Text generation quality assessment |
-| **ROUGE-1/2/L** | Sequence | Generation | Recall-oriented metrics (unigram, bigram, LCS) | Higher is better (0.0-1.0) | Text generation quality assessment |
-| **METEOR** | Sequence | Generation | Harmonic mean with synonym matching and word order | Higher is better (0.0-1.0) | Text generation quality assessment |
-
-### Evaluation Results
-
-**Results Format:**
-
-Each evaluation saves a JSON file to `results/` with pattern: `{model_name}_{timestamp}.json`
-
-```json
-{
-  "model": "nanonets/Nanonets-OCR2-3B",
-  "num_samples": 100,
-  "timestamp": "2025-11-21T19:07:28.364252",
-  "duration_seconds": 395.35,
-  "duration_formatted": "6m 35s",
-  "model_config": { ... },
-  "dataset_info": { ... },
-  "metrics": {
-    "raw": {
-      "cer": 0.87,
-      "wer": 0.84,
-      "chrf": { "score": 42.19 },
-      "bleu": { "bleu": 0.19 },
-      "rouge": { "rouge1": 0.56, "rouge2": 0.44, "rougeL": 0.52 },
-      "meteor": { "meteor": 0.42 }
-    },
-    "cleaned": {
-      "cer": 0.80,
-      "wer": 1.03,
-      "chrf": { "score": 45.84 },
-      "bleu": { "bleu": 0.28 },
-      "rouge": { "rouge1": 0.58, "rouge2": 0.51, "rougeL": 0.55 },
-      "meteor": { "meteor": 0.41 }
-    }
-  },
-  "samples": [ ... ]
-}
-```
-
-**Visualization:**
-
-![Evaluation Results Table](docs/images/evaluation_results_table.png)
-
-![Evaluation Charts](docs/images/evaluation_charts.png)
-
-### Dataset
-
-The evaluation uses the `amaye15/invoices-google-ocr` dataset, which contains:
-- **Images**: Invoice and document images (PNG format)
-- **OCR Annotations**: Structured OCR data with bounding boxes and text
-- **Labels**: Document type classification (Invoice, Receipt, Barcode, etc.)
-
-### Text Cleaning
-
-The evaluation pipeline includes two cleaning functions:
-
-**`clean_html_markdown()`**: Removes HTML tags and markdown syntax
-- Strips `<table>`, `<tr>`, `<td>` tags
-- Removes markdown headers, lists, code blocks
-- Preserves text content
-
-**`clean_ocr_text()`**: OCR text normalization
-- Unicode normalization (smart quotes, dashes, etc.)
-- Whitespace normalization
-- Punctuation spacing fixes
-- Zero-width character removal
-
----
-
 ## Development
 
 ### Project Structure
@@ -1023,7 +1157,8 @@ make help
 - `make ocr-serve-nanonets` - Deploy Nanonets OCR model
 - `make ocr-serve-dots` - Deploy Dots OCR model
 - `make start-api-server` - Start FastAPI server
-- `make run-evaluate` - Run evaluation on active models
+- `make evaluate-ocr` - Run OCR evaluation on active OCR models
+- `make evaluate-translation` - Run translation evaluation on active translation models
 - `make stop` - Stop all vLLM servers
 - `make clean` - Clean project artifacts
 
