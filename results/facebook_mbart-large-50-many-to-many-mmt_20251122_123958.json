@@ -1,0 +1,649 @@
+{
+  "model": "facebook/mbart-large-50-many-to-many-mmt",
+  "model_type": "mbart",
+  "num_samples": 100,
+  "model_config": {
+    "name": "facebook/mbart-large-50-many-to-many-mmt",
+    "type": "mbart",
+    "src_lang": "ar_AR",
+    "target_lang": "en_XX",
+    "max_workers": 3
+  },
+  "dataset_info": {
+    "dataset_name": "Helsinki-NLP/opus-100",
+    "split": "test",
+    "num_samples": 100
+  },
+  "metrics": {
+    "bleu": {
+      "bleu": 0.19523730129038525,
+      "precisions": "[0.512621359223301, 0.2591397849462366, 0.15180722891566265, 0.08955223880597014]",
+      "brevity_penalty": 0.9470826329130546,
+      "length_ratio": 0.9484346224677717,
+      "translation_length": 1030.0,
+      "reference_length": 1086.0
+    },
+    "meteor": {
+      "meteor": 0.4703314877930105
+    },
+    "chrf": {
+      "score": 43.50195976140625,
+      "char_order": 6.0,
+      "word_order": 0.0,
+      "beta": 2.0
+    },
+    "ter": {
+      "score": 73.37078651685394,
+      "num_edits": 653.0,
+      "ref_length": 890.0
+    }
+  },
+  "processing_config": {
+    "max_workers": 3
+  },
+  "timestamp": "2025-11-22T12:39:58.439672",
+  "duration_seconds": 272.223023891449,
+  "duration_formatted": "4m 32s",
+  "samples": [
+    {
+      "sample_index": 0,
+      "source_text": "حسناً ، تبعاً للتقرير هناك ثلاث عبوات ماء مفقودة",
+      "predicted_translation": "Well, according to the report, there are three bottles of water missing.",
+      "reference_translation": "Well, according to the report, there were three water bottles missing."
+    },
+    {
+      "sample_index": 1,
+      "source_text": "81 - استعرضت اللجنة البيانات التي طلبتها من المؤسسات عن صعوبات التوظيف والاستبقاء.",
+      "predicted_translation": "81 -- the Commission presented the data that it asked the institutions on the difficulties of recruitment and retention.",
+      "reference_translation": "The Commission reviewed the data on recruitment and retention difficulties, which it had requested from the organizations."
+    },
+    {
+      "sample_index": 2,
+      "source_text": "هل سترجع للعيش معنا هنا",
+      "predicted_translation": "Will you come back and live with us here?",
+      "reference_translation": "(Maya) So Are You Gonna Move Back In,"
+    },
+    {
+      "sample_index": 3,
+      "source_text": "أجل، تستطيع",
+      "predicted_translation": "Yes, you can.",
+      "reference_translation": "Yes, you may."
+    },
+    {
+      "sample_index": 4,
+      "source_text": "مما أنت خائف؟",
+      "predicted_translation": "What are you afraid of?",
+      "reference_translation": "What are you scared of?"
+    },
+    {
+      "sample_index": 5,
+      "source_text": "{\\cH1F20B1\\3cHFFFFFF}: كما يقول زوجي دائماً",
+      "predicted_translation": "My husband always says that.",
+      "reference_translation": "Like my husband always says..."
+    },
+    {
+      "sample_index": 6,
+      "source_text": "هيّا يا مهدّئات العضلات.",
+      "predicted_translation": "Come on, muscle-destroyers.",
+      "reference_translation": "Come on, muscle relaxers."
+    },
+    {
+      "sample_index": 7,
+      "source_text": "United Nations Juridical Yearbook, 1965, p.",
+      "predicted_translation": "United Nations Juridical Yearbook, 1965, p.",
+      "reference_translation": "United Nations Juridical Yearbook, 1965, p. 41."
+    },
+    {
+      "sample_index": 8,
+      "source_text": "كما انك طردتها.",
+      "predicted_translation": "You've thrown her out.",
+      "reference_translation": "As you rejected it."
+    },
+    {
+      "sample_index": 9,
+      "source_text": "هي متبنّية أسم عصري.",
+      "predicted_translation": "It's based on a modern-day name.",
+      "reference_translation": "She's adopted a fashionable name."
+    },
+    {
+      "sample_index": 10,
+      "source_text": "ثم أنه ليس له.",
+      "predicted_translation": "And then he doesn't have it.",
+      "reference_translation": "Then it's not him."
+    },
+    {
+      "sample_index": 11,
+      "source_text": "في \"أستراليا\".",
+      "predicted_translation": "in Australia.",
+      "reference_translation": "Australia."
+    },
+    {
+      "sample_index": 12,
+      "source_text": "وينبغي ألا تقدم التصويبات إلا للنص باللغات الأصلية.",
+      "predicted_translation": "Texting should only be provided in the native languages.",
+      "reference_translation": "Corrections should be submitted to the original languages only."
+    },
+    {
+      "sample_index": 13,
+      "source_text": "هذا حصل بعد مشاهدته لارنب عيد الفصح",
+      "predicted_translation": "This is after I saw it in the pan of Easter.",
+      "reference_translation": "Right after he saw the Easter Bunny."
+    },
+    {
+      "sample_index": 14,
+      "source_text": "...لديّ الكثير، لذا إذا أردتي أن تُـحضِري أصدقاء، إفعلي هذا",
+      "predicted_translation": "I have a lot, so if you want to make friends, do this.",
+      "reference_translation": "I have more, so if you want to bring friends, do that.."
+    },
+    {
+      "sample_index": 15,
+      "source_text": "شكراً على وقتكم.",
+      "predicted_translation": "Thank you for your time.",
+      "reference_translation": "Thank you so much for your time."
+    },
+    {
+      "sample_index": 16,
+      "source_text": "لا أُريد أن أهرب.",
+      "predicted_translation": "I don't want to run away.",
+      "reference_translation": "We can't stay here! I won't run!"
+    },
+    {
+      "sample_index": 17,
+      "source_text": "فقط ساعة إزدحام",
+      "predicted_translation": "It's just a busy clock.",
+      "reference_translation": "Just rush hour."
+    },
+    {
+      "sample_index": 18,
+      "source_text": "وكثيراً ما يكون ذلك التعاون في شكل وضع إطار مؤسسي لمتابعة مسائل الاستثمار وتحديد الأطر الزمنية للشروع في مفاوضات مستقبلية بشأن تحرير و/أو حماية الاستثمار.",
+      "predicted_translation": "And often that collaboration is in the form of setting up an institutional framework to follow up on investment issues and identifying the timeframes for starting future negotiations on the liberalization and/or protection of investment.",
+      "reference_translation": "However, some agreements establish only a framework for cooperation between the contracting parties."
+    },
+    {
+      "sample_index": 19,
+      "source_text": "اثنا عشر عاما يا اخي",
+      "predicted_translation": "Twelve years old, brother.",
+      "reference_translation": "12 long years, brother."
+    },
+    {
+      "sample_index": 20,
+      "source_text": "الرجل الروسي الذي يتحدث بتسعة لغات مختلفة.",
+      "predicted_translation": "A Russian man who speaks nine different languages.",
+      "reference_translation": "The Russian guy... speaks like, nine different languages. Uh, uh, Danny's friend."
+    },
+    {
+      "sample_index": 21,
+      "source_text": "أن إنسان صالح، الأيها الأب.",
+      "predicted_translation": "That's a good person, Father.",
+      "reference_translation": "You are a good man, Padre."
+    },
+    {
+      "sample_index": 22,
+      "source_text": "فى رايى لا يوجد اسوأ من شرطى جبان ملعون.",
+      "predicted_translation": "There's nothing worse in my life than a bloody policeman.",
+      "reference_translation": "There's nothin' worse in my book than a goddamn yellow cop."
+    },
+    {
+      "sample_index": 23,
+      "source_text": ". لا , لا . لقد قلت بأنه مالي",
+      "predicted_translation": "No, no. I said it's financial.",
+      "reference_translation": "No, no. You said this was my money."
+    },
+    {
+      "sample_index": 24,
+      "source_text": "تتذكرين ليلة أمس عندما كنتِ",
+      "predicted_translation": "You remember last night when I was there.",
+      "reference_translation": "Remember last night when you were all,"
+    },
+    {
+      "sample_index": 25,
+      "source_text": "إنتظر أنت تقطع علاقتك بنا؟",
+      "predicted_translation": "Wait, are you breaking up with us?",
+      "reference_translation": "Wait, you aren't breaking up with us, are you?"
+    },
+    {
+      "sample_index": 26,
+      "source_text": "بحقك يا (غيدجيت) سنخرج هناك بدون حزام؟",
+      "predicted_translation": "Are we going to go out there without a belt, huh?",
+      "reference_translation": "Come on, Gidget. We go out there without a leash..."
+    },
+    {
+      "sample_index": 27,
+      "source_text": "ماذا يُفترض أن تفعل هى الآن؟",
+      "predicted_translation": "What is she supposed to do now?",
+      "reference_translation": "What's she supposed to do?"
+    },
+    {
+      "sample_index": 28,
+      "source_text": "\"إنني واثقاً بحسن نية قدومكم ولقد قبلتُ القبطان (فلينت) ضيفاً لي،",
+      "predicted_translation": "\"I'm sure you're well-intentioned to come, and the captain has accepted me.",
+      "reference_translation": "\"I trusted the good faith of your arrival and I accepted Captain Flint as my guest in the same spirit."
+    },
+    {
+      "sample_index": 29,
+      "source_text": "نيشيميا!",
+      "predicted_translation": "Nigeria!",
+      "reference_translation": "Nishimiya!"
+    },
+    {
+      "sample_index": 30,
+      "source_text": "خلـط التنـدّب أعضـاءه ببعضهـا",
+      "predicted_translation": "Their organs are fused together.",
+      "reference_translation": "It's worse than I thought."
+    },
+    {
+      "sample_index": 31,
+      "source_text": "رائِع.",
+      "predicted_translation": "Wonderful.",
+      "reference_translation": "Aces."
+    },
+    {
+      "sample_index": 32,
+      "source_text": "الفائز يحصل على الفتاة",
+      "predicted_translation": "The winner gets the girl.",
+      "reference_translation": "Winner gets the girl."
+    },
+    {
+      "sample_index": 33,
+      "source_text": ". إنه واضح بعض الشيء",
+      "predicted_translation": "It's kind of obvious.",
+      "reference_translation": "It's kind of obvious."
+    },
+    {
+      "sample_index": 34,
+      "source_text": "هل يمكنك معرفة ما إذا كان أي شيء يحدث",
+      "predicted_translation": "Can you tell if anything is happening?",
+      "reference_translation": "Can you tell if anything's happening,"
+    },
+    {
+      "sample_index": 35,
+      "source_text": "كلاّ يا آنسة (دونام)!",
+      "predicted_translation": "No, Miss (Dum)!",
+      "reference_translation": "No, Ms. Dunham!"
+    },
+    {
+      "sample_index": 36,
+      "source_text": "ونأمل ونتوقع تلقي رد واضح من الحكومة الإسرائيلية على الاقتراح في القريب العاجل.",
+      "predicted_translation": "And we hope and expect to get a clear response from the Israeli government on this very soon.",
+      "reference_translation": "We hope for and expect a clear answer on the proposal from the Israeli Government very soon."
+    },
+    {
+      "sample_index": 37,
+      "source_text": "ياسامي .",
+      "predicted_translation": "Yasmine.",
+      "reference_translation": "And Sammy?"
+    },
+    {
+      "sample_index": 38,
+      "source_text": "بعدها علينا حجزك وإلخ إلخ.",
+      "predicted_translation": "Then we have to book you and so on.",
+      "reference_translation": "Then we gotta book you, blah, blah."
+    },
+    {
+      "sample_index": 39,
+      "source_text": "-شاهدنا (اليس في بلاد العجائب )",
+      "predicted_translation": "We watched.",
+      "reference_translation": "- We saw \"Alice in wonderland.\""
+    },
+    {
+      "sample_index": 40,
+      "source_text": "لم يتناقش أحد معي عندما أحضرتموه من البداية",
+      "predicted_translation": "No one had argued with me when they first brought it in.",
+      "reference_translation": "- Nobody asked me when we brought him."
+    },
+    {
+      "sample_index": 41,
+      "source_text": "ولم يكن سرًا أن الألمان – أعلاهم وأدناهم - اعتبروا الأمريكيين والبريطانيين الأقل شرًا.",
+      "predicted_translation": "And it wasn't a secret that the Germans -- above all, our Germans -- regarded the Americans and the British as the least evil.",
+      "reference_translation": "It was no secret that Germans, high and low, considered the Americans and British the lesser of two evils."
+    },
+    {
+      "sample_index": 42,
+      "source_text": "توقف النزيف",
+      "predicted_translation": "Stop the bleeding.",
+      "reference_translation": "The bleeding stopped."
+    },
+    {
+      "sample_index": 43,
+      "source_text": "أين ذهَبت قي تلك المرات",
+      "predicted_translation": "Where did I go all those times?",
+      "reference_translation": "- Where did you go on these occasions?"
+    },
+    {
+      "sample_index": 44,
+      "source_text": "في حياتك",
+      "predicted_translation": "in your life.",
+      "reference_translation": "Of your whole life."
+    },
+    {
+      "sample_index": 45,
+      "source_text": "هل أوقف كل هذا؟",
+      "predicted_translation": "Do I stop all this?",
+      "reference_translation": "Should I stop all this?"
+    },
+    {
+      "sample_index": 46,
+      "source_text": "ربما الجاني مبتور الساق",
+      "predicted_translation": "Maybe the amputee had a broken leg.",
+      "reference_translation": "Maybe the unsub is an amputee."
+    },
+    {
+      "sample_index": 47,
+      "source_text": "لقد أحظرت مشرط الجراح في حال إحتجنا إليه",
+      "predicted_translation": "I've banned the needle-stick surgery if we need it.",
+      "reference_translation": "I got a scalpel, too, just in case."
+    },
+    {
+      "sample_index": 48,
+      "source_text": "إذن، ماكغي",
+      "predicted_translation": "So, McGee.",
+      "reference_translation": "So McGee,"
+    },
+    {
+      "sample_index": 49,
+      "source_text": "لم يكن معترف بتغطيت أوامر البرنامج من قبل، ولكن أوامر 1-2-3 كانت جزءا لا يتجزأ من عبارات القائمة المعروضة على الشاشة.",
+      "predicted_translation": "He hadn't recognized the program's commands before, but commands one to three were an integral part of the list of commands displayed on the screen.",
+      "reference_translation": "Program commands had not been considered to be covered before, but the commands of 1-2-3 were embedded in the words of the menu displayed on the screen."
+    },
+    {
+      "sample_index": 50,
+      "source_text": "بل على العكس، أعربت وفود كثيرة عن رأيها بأن كافة المواضيع التي تتصل تقليديا بمجال الحماية الدبلوماسية قد تم تناولها وأن على اللجنة أن تختتم دراستها لهذا الموضوع في أقرب وقت ممكن، وبالتأكيد في غضون السنوات الثلاث المتبقية من فترة السنوات الخمس الحالية.",
+      "predicted_translation": "On the contrary, she and many others expressed the view that all the topics traditionally associated with diplomatic protection had been addressed and that the Commission should study this topic as soon as possible, and certainly within the next",
+      "reference_translation": "On the contrary, many delegations expressed the view that all the subjects traditionally belonging to the field of diplomatic protection had been covered and that it was incumbent on the Commission to conclude its study of the subject as soon as possible, and certainly within the remaining three years of the current quinquennium."
+    },
+    {
+      "sample_index": 51,
+      "source_text": "سألني لمزيد من التفاصيل. بوينت بلانك.",
+      "predicted_translation": "He asked me for more details. Boyne Black.",
+      "reference_translation": "He asked me details with a gun to my head."
+    },
+    {
+      "sample_index": 52,
+      "source_text": "(ل) إعادة النظر في مسألة معاملة الأشخاص الذين يقضون عقوبات بالسجن المؤبد لضمان أن يكون ذلك وفقاً للاتفاقية؛",
+      "predicted_translation": "(l) Rethink how people who are serving sentences are treated in prison in order to ensure that it's consistent with the treaty;",
+      "reference_translation": "(l) Review the treatment of persons serving life sentences, to ensure that it is in accordance with the Convention;"
+    },
+    {
+      "sample_index": 53,
+      "source_text": "بالثلاثة والأربعة",
+      "predicted_translation": "Three, four.",
+      "reference_translation": "In threes, fours.."
+    },
+    {
+      "sample_index": 54,
+      "source_text": "ناوسكا",
+      "predicted_translation": "Nova Scotia.",
+      "reference_translation": "Nausicaa."
+    },
+    {
+      "sample_index": 55,
+      "source_text": "(مس (لوجان",
+      "predicted_translation": "Measles.",
+      "reference_translation": "Mrs. Logan,"
+    },
+    {
+      "sample_index": 56,
+      "source_text": "مشبوهة جدا.",
+      "predicted_translation": "It's very speculative.",
+      "reference_translation": "Too suspicious."
+    },
+    {
+      "sample_index": 57,
+      "source_text": "حسناً!",
+      "predicted_translation": "OK!",
+      "reference_translation": "Shoot!"
+    },
+    {
+      "sample_index": 58,
+      "source_text": "أنت و \"مونتى\" كنتم مجانين ليلة أمس نعم , لقد كانت ليلة مثيرة",
+      "predicted_translation": "You and Monte were crazy last night. Yes, it was an exciting night.",
+      "reference_translation": "- Oh, you and Monty were crazy last night."
+    },
+    {
+      "sample_index": 59,
+      "source_text": "انتظر",
+      "predicted_translation": "Hold on.",
+      "reference_translation": "Wait,"
+    },
+    {
+      "sample_index": 60,
+      "source_text": "البند 19 من جدول الأعمال",
+      "predicted_translation": "Band 19 of the agenda.",
+      "reference_translation": "Agenda item 19"
+    },
+    {
+      "sample_index": 61,
+      "source_text": "لقد اصطـدم بـه قطـار",
+      "predicted_translation": "He was hit by cats.",
+      "reference_translation": "He was hit by a train."
+    },
+    {
+      "sample_index": 62,
+      "source_text": "أنظر ، طبقا ً لنظرية إم هناك عدد ثابت من الأبعاد البديلة موجودة بالتوازي مع كوننا الحالي",
+      "predicted_translation": "Look, according to Emma's theory, there are many, many more dimensions of space that are parallel to the universe as we know it.",
+      "reference_translation": "Look, according to M-theory, there are a fixed number of alternate dimensions existing in parallel with our known universe."
+    },
+    {
+      "sample_index": 63,
+      "source_text": "34 - ولا تزال تنمية قدرات موظفي السلطة القضائية مستمرة.",
+      "predicted_translation": "34 -- the capacity-building of the judiciary is still ongoing.",
+      "reference_translation": "Capacity development of judiciary personnel continues."
+    },
+    {
+      "sample_index": 64,
+      "source_text": "سأضع ذلك على حسابك يا أمى ؟",
+      "predicted_translation": "I'm going to put that in your account, Mom?",
+      "reference_translation": "Shall I put this on your account, ma'am?"
+    },
+    {
+      "sample_index": 65,
+      "source_text": "وخصوصا ليس الآن...",
+      "predicted_translation": "And especially not now ...",
+      "reference_translation": "Especially not right now..."
+    },
+    {
+      "sample_index": 66,
+      "source_text": "لم أستطيع التحدث لها مرة أخرى",
+      "predicted_translation": "I couldn't talk to her again.",
+      "reference_translation": "I could never speak of her again."
+    },
+    {
+      "sample_index": 67,
+      "source_text": "لم يكن لديّ فكرة أنه سيكون هنا، أقسم بذلك",
+      "predicted_translation": "I had no idea he was here, I swear to God.",
+      "reference_translation": "I had no idea he would be here, I swear. Don't go."
+    },
+    {
+      "sample_index": 68,
+      "source_text": "انها غلطتي كان يجب ان اقرأها اولا",
+      "predicted_translation": "It's my fault. I had to read it first.",
+      "reference_translation": "They... My fault. I should have read it first."
+    },
+    {
+      "sample_index": 69,
+      "source_text": "سيستغرق الأمر 10 أعوام للاكتشاف العاديّ، كي يبدأ في قلب أحوالهم.",
+      "predicted_translation": "It's going to take 10 years for the average person to discover, to start to understand their situation.",
+      "reference_translation": "It would take 10 years of normal exposure to begin to reverse their condition."
+    },
+    {
+      "sample_index": 70,
+      "source_text": "أكتـب مقالات حـول الحفلات والأزيـاء في البـلدة والريـف البـريطـاني",
+      "predicted_translation": "I searched for articles on party scenes and physics in Latin and Arabic.",
+      "reference_translation": "I write freelance articles about parties and fashion trends... in Town and Country UK."
+    },
+    {
+      "sample_index": 71,
+      "source_text": "وربما لأنهم يدركون بأنه من السهل الذهاب إلى السرير أصبح فاشل مستحيل فجأة لذا تفادوا",
+      "predicted_translation": "And maybe because they realized it was so easy to go to bed, it became impossible all of a sudden, so they kept on going.",
+      "reference_translation": "Maybe it's because they realize how easy it is for love to go bad, to become suddenly impossible... unworkable, an exercise in futility."
+    },
+    {
+      "sample_index": 72,
+      "source_text": "ساقول لوالدتك الحقيقة عن ميخائيل",
+      "predicted_translation": "Tell your mother the truth about Michael.",
+      "reference_translation": "I'll tell your mother the truth about Mikhail."
+    },
+    {
+      "sample_index": 73,
+      "source_text": "ولكن عليك أن تتخلى عنى هل فكرت فى ذلك ؟",
+      "predicted_translation": "But you have to give up on me. Have you thought about that?",
+      "reference_translation": "But you'd have to get rid of me. Have you thought about that?"
+    },
+    {
+      "sample_index": 74,
+      "source_text": "،الآن اجعل الجميع يحزمون اغراضهم و يخرجون من هذا المكان",
+      "predicted_translation": "Now let's get everybody packed up and out of here.",
+      "reference_translation": "Now, get everyone packing and get them out of here."
+    },
+    {
+      "sample_index": 75,
+      "source_text": "لَيسَ الآن, َرُبَّمَا لاحقاً",
+      "predicted_translation": "Now, let's see.",
+      "reference_translation": "Not now. Maybe later."
+    },
+    {
+      "sample_index": 76,
+      "source_text": "لا يمكنك مشاركتها مع الأصدقاء , أو الترفيه , أو مشاهدة فيلم عندما تريد.",
+      "predicted_translation": "You can't share it with your friends, or entertainment, or watch a movie when you want to.",
+      "reference_translation": "There's no spur of the moment activities, you're not meeting people for dinner at the last minute, or seeing a movie whenever you want."
+    },
+    {
+      "sample_index": 77,
+      "source_text": "وإذ يشدد على ضرورة الإسراع بتنفيذ مشاريع كثيفة اليد العاملة ذات فعالية وتأثير كبيرين وتساعد في خلق فرص العمل وتوفير الخدمات الاجتماعية الأساسية،",
+      "predicted_translation": "So it calls for the urgent implementation of hard-working projects that are both effective and highly impactful and help create jobs and provide basic social services.",
+      "reference_translation": "Underlining the need for the quick implementation of highly effective and visible labour intensive projects that help create jobs and deliver basic social services,"
+    },
+    {
+      "sample_index": 78,
+      "source_text": "كيف كان شرابُك؟",
+      "predicted_translation": "How was your wine?",
+      "reference_translation": "How's your drink?"
+    },
+    {
+      "sample_index": 79,
+      "source_text": "في تلفزيون لورا وويل",
+      "predicted_translation": "It's on Laura Wade's television.",
+      "reference_translation": "DBS is my magic wand."
+    },
+    {
+      "sample_index": 80,
+      "source_text": "-فتحت النافذة ؟",
+      "predicted_translation": "Did you open the window?",
+      "reference_translation": "- Open the window! - Yes."
+    },
+    {
+      "sample_index": 81,
+      "source_text": "وتشجع الاستراتيجية بشكل أكبر الاستخدام التكتيكي للاتصالات الإلكترونية على شبكة الإنترانت وعمليات التبادل بين الأقاليم.",
+      "predicted_translation": "The strategy encourages greater use of electronic communications on the Internet and inter-country exchanges.",
+      "reference_translation": "The strategy promotes more tactical use of the UNIFEM Intranet, electronic communications and interregional exchanges."
+    },
+    {
+      "sample_index": 82,
+      "source_text": "هذا هو المكان الذي اختبئ كل أشيائي من الأم.",
+      "predicted_translation": "This is the place where I hid all my mom's belongings.",
+      "reference_translation": "This is where I hide all my stuff from mommy."
+    },
+    {
+      "sample_index": 83,
+      "source_text": "أبى الإضاءة منقطعة هنا ...",
+      "predicted_translation": "The lights are out here.",
+      "reference_translation": "Dad, the lights went out here."
+    },
+    {
+      "sample_index": 84,
+      "source_text": "هل ترغب ببعض القهوه سيدي؟",
+      "predicted_translation": "Would you like some tea, sir?",
+      "reference_translation": "You want some coffee back there! No!"
+    },
+    {
+      "sample_index": 85,
+      "source_text": "إنهم صيادون.",
+      "predicted_translation": "They're fishermen.",
+      "reference_translation": "They're hunters."
+    },
+    {
+      "sample_index": 86,
+      "source_text": "(رفاق (حمد د.",
+      "predicted_translation": "Friends.",
+      "reference_translation": "- Hammad's colleagues."
+    },
+    {
+      "sample_index": 87,
+      "source_text": "حسنٌ، (ليكس) قال أنّه قد يستغرق الأمر فترة.",
+      "predicted_translation": "Well, he said it would take a while.",
+      "reference_translation": "Well, Lex said it might take a while."
+    },
+    {
+      "sample_index": 88,
+      "source_text": "سيلستين",
+      "predicted_translation": "Silence.",
+      "reference_translation": "Célestine!"
+    },
+    {
+      "sample_index": 89,
+      "source_text": "‏15 دقيقة على منتصف الليل!",
+      "predicted_translation": "15 minutes in the middle of the night!",
+      "reference_translation": "15 minutes to midnight!"
+    },
+    {
+      "sample_index": 90,
+      "source_text": "وهذه هي محصلتنا، وهذا هو النداء الذي نوجهه اليوم.",
+      "predicted_translation": "And that's our result, and that's the call we're making today.",
+      "reference_translation": "This is our conclusion, and it is the appeal we make today."
+    },
+    {
+      "sample_index": 91,
+      "source_text": "4- السودان",
+      "predicted_translation": "Fourth, Sudan.",
+      "reference_translation": "Sudan"
+    },
+    {
+      "sample_index": 92,
+      "source_text": "وأنت ترحل",
+      "predicted_translation": "And you're leaving.",
+      "reference_translation": "and you leave."
+    },
+    {
+      "sample_index": 93,
+      "source_text": "الأبحاث الحديثة تقول يجب إعطائه بعض الوقــت ليستريح",
+      "predicted_translation": "Modern research tells us we should give him some time to rest.",
+      "reference_translation": "Recent research says you must give him time off to recover."
+    },
+    {
+      "sample_index": 94,
+      "source_text": "لـم يُمكنك المقاومة، أليس كذلك؟",
+      "predicted_translation": "You can't resist, can you?",
+      "reference_translation": "Couldn't resist, could you?"
+    },
+    {
+      "sample_index": 95,
+      "source_text": "جميل، لكنه غير مهم",
+      "predicted_translation": "It's beautiful, but it doesn't matter.",
+      "reference_translation": "Lovely, if a bit lightweight."
+    },
+    {
+      "sample_index": 96,
+      "source_text": "لكن يجب عليكِ ان تعقدي صفقه مع الشيطان",
+      "predicted_translation": "But you have to make a deal with the devil.",
+      "reference_translation": "But you'll have to make a deal with the devil."
+    },
+    {
+      "sample_index": 97,
+      "source_text": "الدورة التنظيمية المستأنفة لعام 2009",
+      "predicted_translation": "The clean regulatory cycle for 2009.",
+      "reference_translation": "Resumed organizational session for 2009"
+    },
+    {
+      "sample_index": 98,
+      "source_text": "ويشير الدليل التفصيلي إلى الحاجة إلى زيادة إمكانية الحصول على الرعاية الطبية والأدوية بأسعار معقولة ودعم عملية الابتكار في الوقت نفسه، ويرحب الدليل بصفة خاصة بالجهود المبذولة على الصعيد الوطني لتشجيع الابتكار وتطوير صناعة الأدوية محلياً لكفالة توفير الأدوية للجميع، وزيادة البحث والتطوير في مجال تصنيع أدوية متطورة لعلاج الأمراض التي تصيب بالدرجة الأولى البلدان النامية وفي مجال التكنولوجيات الأخرى التي تفيد الفقراء؛ تعزيز برامج التحصين والتطعيم وتعزيز أنظمة الرعاية الصحية بوجه عام، وإتاحة إمكانية الحصول على التكنولوجيات المتصلة بفيروس نقص المناعة البشرية/متلازمة نقص المناعة المكتسب (الأيدز)، ونشر المعرفة والبحوث.",
+      "predicted_translation": "The detailed evidence points to the need to increase access to affordable medical care and drugs and support innovation at the same time, and particularly welcomes the national efforts to encourage innovation and development of the pharmaceutical industry locally to",
+      "reference_translation": "The road map points to the need for greater access to affordable medicine and drugs while supporting the process of innovation, and particularly welcomed national efforts to promote innovation and the development of domestic pharmaceutical industries to ensure medicine for all; increased research and development on advanced medicines for those diseases that primarily affect developing countries and other technologies for the poor; enhanced immunization and vaccination programmes; general strengthening of health-care systems; access to technologies related to HIV/AIDS; and the dissemination of knowledge and research."
+    },
+    {
+      "sample_index": 99,
+      "source_text": "أقصد، لا أريد أن أكون مساعدة لكامل حياتي",
+      "predicted_translation": "I mean, I don't want to be a lifelong help.",
+      "reference_translation": "But I don't want it!"
+    }
+  ]
+}

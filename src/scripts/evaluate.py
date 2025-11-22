@@ -27,6 +27,9 @@ def evaluate_ocr(config, dataset_name, dataset_split, num_samples, extra):
     dataset = download_dataset(dataset_name=dataset_name, split=dataset_split)
 
     for model_config in config.ocr_models:
+        if not model_config.active:
+            logger.info(f"Skipping inactive OCR model: {model_config.name}")
+            continue
         logger.info(f"Evaluating OCR model: {model_config.name}")
         results = evaluate_dataset(
             dataset=dataset,
@@ -116,6 +119,9 @@ def evaluate_translation(config, dataset_name, dataset_config, dataset_split, nu
         return
 
     for model_config in config.translation_models:
+        if not model_config.active:
+            logger.info(f"Skipping inactive translation model: {model_config.name}")
+            continue
         logger.info(f"Evaluating translation model: {model_config.name}")
         results = evaluate_dataset(
             dataset=dataset,

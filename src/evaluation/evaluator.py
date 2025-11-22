@@ -279,6 +279,14 @@ def _evaluate_ocr(
     rouge_metric = evaluate.load("rouge")
     meteor_metric = evaluate.load("meteor")
 
+    try:
+        bleu_raw = bleu_metric.compute(
+            predictions=raw_predictions,
+            references=[[ref] for ref in dataset[ground_truth_column]],
+        )
+    except (ZeroDivisionError, ValueError):
+        bleu_raw = {"bleu": 0.0}
+
     metrics_raw = {
         # Core OCR metrics
         "cer": cer_metric.compute(
@@ -294,10 +302,7 @@ def _evaluate_ocr(
             predictions=raw_predictions, references=dataset[ground_truth_column]
         ),
         # Generation metrics
-        "bleu": bleu_metric.compute(
-            predictions=raw_predictions,
-            references=[[ref] for ref in dataset[ground_truth_column]],
-        ),
+        "bleu": bleu_raw,
         "rouge": rouge_metric.compute(
             predictions=raw_predictions, references=dataset[ground_truth_column]
         ),
@@ -305,6 +310,14 @@ def _evaluate_ocr(
             predictions=raw_predictions, references=dataset[ground_truth_column]
         ),
     }
+
+    try:
+        bleu_cleaned = bleu_metric.compute(
+            predictions=cleaned_predictions,
+            references=[[ref] for ref in dataset[ground_truth_column]],
+        )
+    except (ZeroDivisionError, ValueError):
+        bleu_cleaned = {"bleu": 0.0}
 
     metrics_cleaned = {
         # Core OCR metrics
@@ -321,10 +334,7 @@ def _evaluate_ocr(
             predictions=cleaned_predictions, references=dataset[ground_truth_column]
         ),
         # Generation metrics
-        "bleu": bleu_metric.compute(
-            predictions=cleaned_predictions,
-            references=[[ref] for ref in dataset[ground_truth_column]],
-        ),
+        "bleu": bleu_cleaned,
         "rouge": rouge_metric.compute(
             predictions=cleaned_predictions, references=dataset[ground_truth_column]
         ),
@@ -539,10 +549,16 @@ def _evaluate_translation(
     chrf_metric = evaluate.load("chrf")
     ter_metric = evaluate.load("ter")
 
-    metrics = {
-        "bleu": bleu_metric.compute(
+
+    try:
+        bleu_score = bleu_metric.compute(
             predictions=predictions, references=[[ref] for ref in references]
-        ),
+        )
+    except (ZeroDivisionError, ValueError):
+        bleu_score = {"bleu": 0.0}
+
+    metrics = {
+        "bleu": bleu_score,
         "meteor": meteor_metric.compute(predictions=predictions, references=references),
         "chrf": chrf_metric.compute(predictions=predictions, references=references),
         "ter": ter_metric.compute(predictions=predictions, references=references),
